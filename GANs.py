@@ -10,6 +10,7 @@ class GANs(keras.Model):
         predictor,
         latent_dim,
         discriminator_extra_steps=1,
+        generator_extra_steps=1
     ):
         super(GANs, self).__init__()
         self.discriminator = discriminator
@@ -17,6 +18,7 @@ class GANs(keras.Model):
         self.predictor = predictor
         self.latent_dim = latent_dim
         self.d_steps = discriminator_extra_steps
+        self.g_steps = generator_extra_steps
 
 
     def compile(self, d_optimizer, g_optimizer, d_loss_fn, g_loss_fn):
@@ -60,12 +62,13 @@ class GANs(keras.Model):
 
     def _generator_train_step(self, real_images, labels):
         batch_size = tf.shape(real_images)[0]
-        g_inputs = self._get_generator_inputs(batch_size, labels)
-        g_loss, g_gradient = self._get_generator_loss_and_grads(batch_size, g_inputs, labels)
-        # Update the weights of the generator using the generator optimizer
-        self.g_optimizer.apply_gradients(
-            zip(g_gradient, self.generator.trainable_variables)
-        )
+        for _ in range(self.g_steps):
+            g_inputs = self._get_generator_inputs(batch_size, labels)
+            g_loss, g_gradient = self._get_generator_loss_and_grads(batch_size, g_inputs, labels)
+            # Update the weights of the generator using the generator optimizer
+            self.g_optimizer.apply_gradients(
+                zip(g_gradient, self.generator.trainable_variables)
+            )
 
         return g_loss
 

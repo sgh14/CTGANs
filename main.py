@@ -45,7 +45,8 @@ gans = GANs(
     generator=generator,
     predictor=predictor,
     latent_dim=latent_dim,
-    discriminator_extra_steps=2
+    discriminator_extra_steps=1,
+    generator_extra_steps=1
 )
 
 # Instantiate the optimizer for both networks
