@@ -12,57 +12,39 @@ def conv_block(
     padding="same",
     use_bias=True,
     use_bn=False,
-    use_dropout=False,
+    use_dropout=True,
     drop_value=0.3,
+    maxpool=False
 ):
     x = layers.Conv2D(
-        filters, kernel_size, strides=strides, padding=padding, use_bias=use_bias
+        filters,
+        kernel_size,
+        strides=strides,
+        padding=padding,
+        use_bias=use_bias
     )(x)
     if use_bn:
         x = layers.BatchNormalization()(x)
-    x = activation(x)
+    if activation:
+        x = activation(x)
     if use_dropout:
         x = layers.Dropout(drop_value)(x)
+    if maxpool:
+        x = layers.MaxPool2D(pool_size=(2, 2))
 
     return x
 
 
 def get_discriminator(input_shape):
     img_input = layers.Input(shape=input_shape)
-    # Zero pad the input to make the input images size to (116, 116, 1).
     x = layers.ZeroPadding2D((1, 1))(img_input)
-    x = conv_block(
-        x,
-        64,
-        activation=layers.LeakyReLU(0.2),
-    )
-    x = layers.ZeroPadding2D((1, 1))(img_input)
-    x = conv_block(
-        x,
-        128,
-        activation=layers.LeakyReLU(0.2),
-        use_dropout=True,
-    )
-    x = layers.ZeroPadding2D((1, 1))(img_input)
-    x = conv_block(
-        x,
-        256,
-        activation=layers.LeakyReLU(0.2),
-        use_dropout=True,
-    )
-    x = conv_block(
-        x,
-        512,
-        activation=layers.LeakyReLU(0.2),
-        use_dropout=True
-    )
-    x = conv_block(
-        x,
-        1024,
-        activation=layers.LeakyReLU(0.2),
-        use_dropout=True
-    )
-
+    x = conv_block(x, 64, layers.LeakyReLU(0.2), use_dropout=False)
+    x = layers.ZeroPadding2D((1, 1))(x)
+    x = conv_block(x, 128, layers.LeakyReLU(0.2))
+    x = layers.ZeroPadding2D((1, 1))(x)
+    x = conv_block(x, 256, layers.LeakyReLU(0.2))
+    x = conv_block(x, 512, layers.LeakyReLU(0.2))
+    x = conv_block(x, 1024, layers.LeakyReLU(0.2))
     x = layers.Flatten()(x)
     x = layers.Dropout(0.2)(x)
     x = layers.Dense(1)(x)
