@@ -107,7 +107,7 @@ class GANs(keras.Model):
     def train_step(self, data):
         # Unpack the data.
         features, labels = data
-        real_images = tf.reshape(features['images'], (-1, 114, 114, 1))
+        real_images = features['images']
         labels['particletype'] = tf.reshape(labels['particletype'], (-1, 2))
         labels['energy'] = tf.reshape(labels['energy'], (-1, 1))
         labels['direction'] = tf.reshape(labels['direction'], (-1, 2))
