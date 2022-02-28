@@ -13,7 +13,7 @@ from data_generator import *
 
 #%% LOAD DATA
 # TODO: image normalization
-config_path = 'LSTCam_TRN_lowcut.yml'
+config_path = 'config.yml'
 dataset, data_features = load_data(config_path, 'train', batch_size=64, shuffle=False)
 latent_dim = 128
 
@@ -57,7 +57,7 @@ discriminator_optimizer = optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta
 generator_loss = get_generator_loss()
 discriminator_loss = get_discriminator_loss()
 
-# TODO: añadir tensorboard callback
+# TODO: add tensorboard callback
 # Compile the GANs model.
 gans.compile(
     d_optimizer=discriminator_optimizer,
