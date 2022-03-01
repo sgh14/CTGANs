@@ -74,11 +74,11 @@ def get_generator(input_shape):
     x = upsample_block(x, 128, layers.LeakyReLU(0.2))
     x = upsample_block(x, 64, layers.LeakyReLU(0.2))
     x = upsample_block(x, 32, layers.LeakyReLU(0.2))
-    x = layers.Cropping2D((1, 1))(x)
-    x = upsample_block(x, 16, layers.LeakyReLU(0.2))
-    x = layers.Cropping2D((1, 1))(x)
-    x = upsample_block(x, 1, layers.Activation("tanh"))
-    x = layers.Cropping2D((1, 1))(x)
+    # x = layers.Cropping2D((1, 1))(x)
+    # x = upsample_block(x, 16, layers.LeakyReLU(0.2))
+    # x = layers.Cropping2D((1, 1))(x)
+    x = upsample_block(x, 1, layers.LeakyReLU(0.2))#layers.Activation("tanh"))
+    # x = layers.Cropping2D((1, 1))(x)
 
     g_model = models.Model(z, x, name="generator")
 
@@ -91,7 +91,7 @@ def get_generator_loss(loss_name='basic'):
             bce = losses.BinaryCrossentropy(from_logits=True)
             cce = losses.CategoricalCrossentropy(from_logits=True)
             mae = losses.MeanAbsoluteError()
-            w = np.array([1, 0, 0, 0])
+            w = np.array([1, 0.3, 0.3, 0.3])
             # TODO: use weights and allow tunning
             loss = w[0]*bce(disc_labels, disc_logits)
             if 'particletype' in pred_labels.keys():

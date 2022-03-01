@@ -12,7 +12,7 @@ def conv_block(
     padding="same",
     use_bias=True,
     use_bn=False,
-    use_dropout=True,
+    use_dropout=False,
     drop_value=0.3,
     maxpool=False
 ):
@@ -37,14 +37,14 @@ def conv_block(
 
 def get_discriminator(input_shape):
     img_input = layers.Input(shape=input_shape)
-    x = layers.ZeroPadding2D((1, 1))(img_input)
-    x = conv_block(x, 64, layers.LeakyReLU(0.2), use_dropout=False)
-    x = layers.ZeroPadding2D((1, 1))(x)
-    x = conv_block(x, 128, layers.LeakyReLU(0.2))
-    x = layers.ZeroPadding2D((1, 1))(x)
-    x = conv_block(x, 256, layers.LeakyReLU(0.2))
+    # x = layers.ZeroPadding2D((1, 1))(img_input)
+    x = conv_block(img_input, 64, layers.LeakyReLU(0.2))
+    # x = layers.ZeroPadding2D((1, 1))(x)
+    x = conv_block(x, 128, layers.LeakyReLU(0.2), use_dropout=True)
+    # x = layers.ZeroPadding2D((1, 1))(x)
+    x = conv_block(x, 256, layers.LeakyReLU(0.2), use_dropout=True)
     x = conv_block(x, 512, layers.LeakyReLU(0.2))
-    x = conv_block(x, 1024, layers.LeakyReLU(0.2))
+    # x = conv_block(x, 1024, layers.LeakyReLU(0.2))
     x = layers.Flatten()(x)
     x = layers.Dropout(0.2)(x)
     x = layers.Dense(1)(x)
