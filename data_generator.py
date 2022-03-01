@@ -15,14 +15,13 @@ def generate_data(latent_dim, labels, generator_path='models/generator.h5'):
       np.reshape(labels['direction'], (-1, 2))],
       axis = 1
   )
-  generated_images = generator(random_vector_labels)
+  generated_images = generator(random_vector_labels).numpy()
   
   return generated_images
 
 
 def plot_image(image, save_path=''):
-  fig, ax = plt.subplots(figsize=(10,10))
-  image = image.numpy()
+  fig, ax = plt.subplots(figsize=(8,8))
   ax.pcolor(np.squeeze(image), cmap='viridis')
   ax.axis('off')
   if save_path:
