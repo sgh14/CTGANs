@@ -85,8 +85,8 @@ def get_generator(input_shape):
     return g_model
 
 
-def get_generator_loss(loss_name='normal'):
-    if loss_name == 'normal':
+def get_generator_loss(loss_name='basic'):
+    if loss_name == 'basic':
         def generator_loss(disc_logits, pred_logits, disc_labels, pred_labels):
             bce = losses.BinaryCrossentropy(from_logits=True)
             cce = losses.CategoricalCrossentropy(from_logits=True)

@@ -54,8 +54,8 @@ def get_discriminator(input_shape):
     return discriminator
 
 
-def get_discriminator_loss(loss_name='normal'):
-    if loss_name == 'normal':
+def get_discriminator_loss(loss_name='basic'):
+    if loss_name == 'basic':
         def discriminator_loss(labels, logits):
             bce = losses.BinaryCrossentropy(from_logits=True)
             loss = bce(labels, logits)
