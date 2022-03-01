@@ -17,6 +17,8 @@ Data:
             'LSTCam': 'bilinear_interpolation'
         padding:
             'LSTCam': 2
+        interpolation_image_shape:
+            'LSTCam': [60, 60, 1]
         mask_interpolation: false
     parameter_selection: 
         - {col_name: "hillas_intensity", min_value: 50.0}
