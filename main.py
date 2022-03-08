@@ -81,7 +81,7 @@ generator.save(generator_path)
 discriminator.save(discriminator_path)
 
 #%% GENERATE DATA
-generated_data_dir = 'generated_data'
+generated_data_dir = 'images'
 features, labels = dataset.__getitem__(0)
 images = generate_data(latent_dim, labels)
 plot_grid(features['images'], save_path=os.path.join(generated_data_dir, 'real_images.png'))
