@@ -82,10 +82,10 @@ generator.save(generator_path)
 discriminator.save(discriminator_path)
 
 #%% GENERATE DATA
-generated_data_dir = 'images'
-os.makedirs(generated_data_dir, exist_ok=True)
+images_dir = 'images'
+os.makedirs(images_dir, exist_ok=True)
 features, labels = dataset.__getitem__(0)
 images = generate_data(latent_dim, labels)
-plot_grid(features['images'], save_path=os.path.join(generated_data_dir, 'real_images.png'))
-plot_grid(images, save_path=os.path.join(generated_data_dir, 'generated_images.png'))
+plot_grid(features['images'], save_path=os.path.join(images_dir, 'real_images.png'))
+plot_grid(images, save_path=os.path.join(images_dir, 'generated_images.png'))
 # %%
