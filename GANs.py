@@ -32,13 +32,9 @@ class GANs(keras.Model):
     def _get_generator_inputs(self, batch_size, labels):
         # Sample random points in the latent space and concatenate the labels.
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
-        random_vector_labels = tf.concat(
-            [random_latent_vectors,
-            labels['particletype'],
-            labels['energy'],
-            labels['direction']],
-            axis = 1
-        )
+        random_vector_labels = random_latent_vectors
+        for task in labels.values():
+            random_vector_labels = tf.concat([random_vector_labels, task], axis = 1)
 
         return random_vector_labels
 
@@ -108,9 +104,13 @@ class GANs(keras.Model):
         # Unpack the data.
         features, labels = data
         real_images = features['images']
-        labels['particletype'] = tf.reshape(labels['particletype'], (-1, 2))
-        labels['energy'] = tf.reshape(labels['energy'], (-1, 1))
-        labels['direction'] = tf.reshape(labels['direction'], (-1, 2))
+        for task in labels.keys():
+            # TODO: remove 2 and task=='energy' to generalize.
+            label_shape = 2 if task != 'energy' else 1
+            # label_shape = tf.cond(tf.rank(labels[task])==2, lambda: tf.shape(labels[task])[-1], lambda: 1)
+            # label_shape = tf.shape(labels[task])[1] if tf.rank(labels[task]) == tf.constant(2) else 1
+            labels[task] = tf.reshape(labels[task], (-1, label_shape))
+
         # Discriminator train step
         d_loss = self._discriminator_train_step(real_images, labels)
         # Generator train step
