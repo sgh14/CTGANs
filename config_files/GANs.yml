@@ -1,0 +1,27 @@
+Data_format: 'dl1dh'
+Reco: ['energy', 'direction'] # 'particletype', 
+Data:
+    # Allow to overwrite config setting based on tasks selection
+    # allow_overwrite: true
+    file_list: '/home/sgarcia/code/CTGANs/data_files/gamma-diffuse.txt' # TODO: train.txt
+    mode: 'mono' # 'stereo'
+    selected_telescope_types: ['LST_MAGIC_MAGICCam']
+    shuffle: true
+    seed: 1234
+    image_channels: ['image'] #, 'peak_time']
+    mapping_settings:
+        camera_types: ['MAGICCam']
+        mapping_method:
+            'MAGICCam': 'image_shifting'
+        padding:
+            'MAGICCam': 2
+        # interpolation_image_shape:
+        #     'LSTCam': [60, 60, 1]
+        mask_interpolation: false
+    parameter_selection: 
+        - {col_name: "hillas_intensity", min_value: 50.0} # 200.0}
+        - {col_name: "leakage_intensity_width_2", max_value: 0.2} # 0.0}
+Input:
+    shuffle: true
+    batch_size_per_worker: 64
+    concat_telescopes: false # true
