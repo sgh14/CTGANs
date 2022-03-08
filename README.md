@@ -26,6 +26,9 @@ First, update `config.yml` paths and make sure that the images have the same dim
 ## Results
 
 Generated images after 1 epoch of training with a dataset of over 2.000.000 images:
+
 <img title="generated_images" src="images/generated_images.png">
+
 The real images corresponding to same labels are:
+
 <img title="real_images" src="images/real_images.png">
