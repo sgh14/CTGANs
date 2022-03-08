@@ -32,6 +32,7 @@ generator_in_shape = (latent_dim + data_features['labels_dim'],)
 generator = get_generator(generator_in_shape)
 generator.summary()
 models_plots_dir = 'models_diagrams'
+os.makedirs(models_plots_dir, exist_ok=True)
 gen_plot_file = os.path.join(models_plots_dir, 'generator.png')
 tf.keras.utils.plot_model(generator, show_shapes=True, to_file=gen_plot_file)
 
@@ -82,6 +83,7 @@ discriminator.save(discriminator_path)
 
 #%% GENERATE DATA
 generated_data_dir = 'images'
+os.makedirs(generated_data_dir, exist_ok=True)
 features, labels = dataset.__getitem__(0)
 images = generate_data(latent_dim, labels)
 plot_grid(features['images'], save_path=os.path.join(generated_data_dir, 'real_images.png'))
