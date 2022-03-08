@@ -1,6 +1,5 @@
 /models/
 /__pycache__/
-model.png
-notes.md
-gamma_20deg_0deg_run1000___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1.h5
-balanced.txt
+/data_files/
+/misc/
+/models_diagrams/
