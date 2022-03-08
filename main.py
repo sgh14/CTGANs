@@ -13,30 +13,34 @@ from data_generator import *
 
 #%% LOAD DATA
 # TODO: image normalization
-config_path = 'config.yml'
-dataset, data_features = load_data(config_path, 'train', batch_size=64, shuffle=False)
-latent_dim = 128
+config_files_dir = 'config_files'
+GANs_config = os.path.join(config_files_dir, 'GANs.yml')
+dataset, data_features = load_data(GANs_config, 'train', batch_size=64, shuffle=False)
+latent_dim = 512
 
 #%% TRAIN THE CTLearn MODEL IF THERE ISN'T ANY ALREADY SAVED
 models_dir = 'models'
 os.makedirs(models_dir, exist_ok=True)
 predictor_path = os.path.join(models_dir, 'predictor')
 if os.path.relpath(predictor_path, models_dir) not in os.listdir(models_dir):
-    train_predictor(config_path)
+    train_predictor(os.path.join(config_files_dir, 'predictor.yml'))
 
 predictor = models.load_model(predictor_path)
 
 #%% BUILD THE GENERATOR
-generator_in_shape = (latent_dim + 2 + 1 + 2,)
+generator_in_shape = (latent_dim + data_features['labels_dim'],)
 generator = get_generator(generator_in_shape)
 generator.summary()
-tf.keras.utils.plot_model(generator, show_shapes=True)
+models_plots_dir = 'models_diagrams'
+gen_plot_file = os.path.join(models_plots_dir, 'generator.png')
+tf.keras.utils.plot_model(generator, show_shapes=True, to_file=gen_plot_file)
 
 #%% BUILD THE DISCRIMINATOR
 discriminator_in_shape = data_features['image_shape']
 discriminator = get_discriminator(discriminator_in_shape)
 discriminator.summary()
-tf.keras.utils.plot_model(discriminator, show_shapes=True)
+disc_plot_file = os.path.join(models_plots_dir, 'discriminator.png')
+tf.keras.utils.plot_model(discriminator, show_shapes=True, to_file=disc_plot_file)
 
 #%% BUILD GANS
 # Instantiate the GANs model.
@@ -67,7 +71,8 @@ gans.compile(
 )
 
 #%% TRAIN GANS
-gans.fit(dataset, epochs=10, verbose=1)
+# TODO: history = gans.fit() --> plot g_loss and d_loss evolution
+gans.fit(dataset, epochs=1, verbose=1)
 
 #%% SAVE THE MODELS
 generator_path = os.path.join(models_dir, 'generator.h5')
@@ -76,8 +81,9 @@ generator.save(generator_path)
 discriminator.save(discriminator_path)
 
 #%% GENERATE DATA
+generated_data_dir = 'generated_data'
 features, labels = dataset.__getitem__(0)
 images = generate_data(latent_dim, labels)
-plot_image(images[0])
-# predictor(images[0].numpy().reshape(-1, 114, 114, 1))
+plot_grid(features['images'], save_path=os.path.join(generated_data_dir, 'real_images.png'))
+plot_grid(images, save_path=os.path.join(generated_data_dir, 'generated_images.png'))
 # %%
