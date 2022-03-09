@@ -1,6 +1,4 @@
-from tensorflow.keras import layers
-from tensorflow.keras import models
-from tensorflow.keras import losses
+from tensorflow.keras import layers, models, losses
 
 
 def conv_block(
@@ -48,7 +46,7 @@ def get_discriminator(input_shape):
     x = conv_block(x, 512, layers.LeakyReLU(0.2))
     x = layers.Flatten()(x)
     x = layers.Dropout(0.2)(x)
-    x = layers.Dense(1)(x)
+    x = layers.Dense(1, activation='sigmoid')(x) # TODO: use linear activation when using W_GP loss
 
     discriminator = models.Model(img_input, x, name="discriminator")
 
