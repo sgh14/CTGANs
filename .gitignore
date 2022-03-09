@@ -2,4 +2,7 @@
 /__pycache__/
 /data_files/
 /misc/
-/models_diagrams/
+images/losses.png
+images/generator.png
+images/generated_images_*.png
+images/discriminator.png
