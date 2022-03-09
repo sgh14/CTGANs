@@ -1,22 +1,17 @@
 import tensorflow as tf
-from tensorflow.keras import models
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def generate_data(latent_dim, labels, generator_path='models/generator.h5'):
-  generator = models.load_model(generator_path)
-  batch_size = len(labels['energy'])
+def generate_data(latent_dim, labels, generator):
+  batch_size = list(labels.values())[0].shape[0]
   random_latent_vectors = tf.random.normal(shape=(batch_size, latent_dim))
-  random_vector_labels = random_latent_vectors
+  g_inputs = random_latent_vectors
   for task in labels.values():
     label_shape = task.shape[1] if np.ndim(task) == 2 else 1
-    random_vector_labels = tf.concat(
-      [random_vector_labels, np.reshape(task, (-1, label_shape))],
-      axis = 1
-    )
+    g_inputs = tf.concat([g_inputs, np.reshape(task, (-1, label_shape))], axis = 1)
 
-  generated_images = generator(random_vector_labels).numpy()
+  generated_images = generator(g_inputs).numpy()
   
   return generated_images
 
