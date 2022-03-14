@@ -4,6 +4,7 @@ from ctlearn.data_loader import KerasBatchGenerator
 from ctlearn.utils import *
 
 
+# TODO: scale images to [-1, 1] range
 def load_data(config_path, mode, batch_size=64, shuffle=False):
     with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
@@ -19,17 +20,5 @@ def load_data(config_path, mode, batch_size=64, shuffle=False):
     # Set up the KerasBatchGenerator
     indices = list(range(len(reader)))
     dataset = KerasBatchGenerator(reader, indices, batch_size=batch_size, mode=mode, shuffle=shuffle)
-    # Create a dictionary with useful dataset features
-    features, labels = dataset.__getitem__(0)
-    labels_dim = 0
-    for task in labels.values():
-        label_shape = task.shape[1] if np.ndim(task) == 2 else 1
-        labels_dim += label_shape
 
-    data_features = {
-        'image_shape': dataset.img_shape,
-        'batch_size': dataset.batch_size,
-        'labels_dim': labels_dim
-    }
-
-    return dataset, data_features
+    return dataset

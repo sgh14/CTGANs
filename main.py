@@ -1,32 +1,28 @@
 #%%
-import tensorflow as tf
-from tensorflow.keras import models, optimizers
+from tensorflow.keras import optimizers
 import os
 
 from data_loader import *
 from predictor import *
-from discriminator import get_discriminator, get_discriminator_loss
-from generator import get_generator, get_generator_loss
+from discriminator import Discriminator, get_discriminator_loss
+from generator import Generator, get_generator_loss
 from GANs import *
 from data_generator import *
 
 #%% LOAD DATA
 config_files_dir = 'config_files'
 GANs_config = os.path.join(config_files_dir, 'GANs.yml')
-dataset, data_features = load_data(GANs_config, 'train', batch_size=64, shuffle=False)
-latent_dim = 512
+dataset = load_data(GANs_config, 'train', batch_size=64, shuffle=False)
 
 #%% TRAIN THE CTLearn MODEL IF THERE ISN'T ANY ALREADY SAVED
 predictor_config = os.path.join(config_files_dir, 'predictor.yml')
 predictor = get_predictor(predictor_config)
 
 #%% BUILD THE GENERATOR
-generator_in_shape = (latent_dim + data_features['labels_dim'],)
-generator = get_generator(generator_in_shape)
+generator = Generator(latent_dim=512)
 
 #%% BUILD THE DISCRIMINATOR
-discriminator_in_shape = data_features['image_shape']
-discriminator = get_discriminator(discriminator_in_shape)
+discriminator = Discriminator()
 
 #%% BUILD GANS
 # Instantiate the GANs model.
@@ -34,7 +30,6 @@ gans = GANs(
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
-    latent_dim=latent_dim,
     discriminator_extra_steps=1,
     generator_extra_steps=1
 )
