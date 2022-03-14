@@ -17,13 +17,8 @@ dataset, data_features = load_data(GANs_config, 'train', batch_size=64, shuffle=
 latent_dim = 512
 
 #%% TRAIN THE CTLearn MODEL IF THERE ISN'T ANY ALREADY SAVED
-models_dir = 'models'
-os.makedirs(models_dir, exist_ok=True)
-predictor_path = os.path.join(models_dir, 'predictor')
-if os.path.relpath(predictor_path, models_dir) not in os.listdir(models_dir):
-    train_predictor(os.path.join(config_files_dir, 'predictor.yml'))
-
-predictor = models.load_model(predictor_path)
+predictor_config = os.path.join(config_files_dir, 'predictor.yml')
+predictor = get_predictor(predictor_config)
 
 #%% BUILD THE GENERATOR
 generator_in_shape = (latent_dim + data_features['labels_dim'],)
