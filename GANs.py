@@ -113,8 +113,6 @@ class GANs(keras.Model):
         for _ in range(self.d_steps):
             # Generate fake images
             generated_images = self.generator(labels, training=False)
-            combined_images = tf.concat([generated_images, real_images], axis=0)
-            combined_labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
             # Get discriminator loss and gradients
             # TODO: for images in zip((real_images, generated_images), (tf.ones((batch_size, 1)), tf.zeros((batch_size, 1)))):
             d_loss, d_gradient = self._get_discriminator_loss_and_grads(batch_size, real_images, generated_images)
