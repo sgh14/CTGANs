@@ -19,10 +19,12 @@ predictor_config = os.path.join(config_files_dir, 'predictor.yml')
 predictor = get_predictor(predictor_config)
 
 #%% BUILD THE GENERATOR
-generator = Generator(latent_dim=512)
+g_path = None
+generator = models.load_model(g_path) if g_path else Generator(latent_dim=512)
 
 #%% BUILD THE DISCRIMINATOR
-discriminator = Discriminator()
+d_path = None
+discriminator = models.load_model(d_path) if d_path else Discriminator()
 
 #%% BUILD GANS
 # Instantiate the GANs model.
