@@ -1,5 +1,5 @@
 #%%
-from tensorflow.keras import optimizers
+from tensorflow.keras import optimizers, models
 import os
 
 from data_loader import *
