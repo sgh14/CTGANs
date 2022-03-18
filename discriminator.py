@@ -76,10 +76,17 @@ class Discriminator(keras.Model):
 
 def get_discriminator_loss(loss_name='basic'):
     if loss_name == 'basic':
-        def discriminator_loss(labels, logits):
+        def discriminator_loss(labels, d_outputs):
             # use from_logits=True to avoid using sigmoid activation when defining the discriminator
             bce = losses.BinaryCrossentropy(from_logits=True)
-            loss = bce(labels, logits)
+            loss = bce(labels, d_outputs)
+
+            return loss
+
+    if loss_name == 'least_squares':
+        def discriminator_loss(labels, d_outputs):
+            mse = losses.MeanSquaredError()
+            loss = mse(labels, d_outputs)
 
             return loss
 
