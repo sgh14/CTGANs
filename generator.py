@@ -174,4 +174,20 @@ def get_generator_loss(loss_name='basic', weights=np.array([1, 1, 1, 1])):
                      
             return loss
 
+    if loss_name == 'w_gp':
+        def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
+            cce = losses.CategoricalCrossentropy()
+            mae = losses.MeanAbsoluteError()
+            loss = weights[0]*(-tf.reduce_mean(d_outputs))
+            if 'particletype' in p_labels.keys():
+                loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
+
+            if 'energy' in p_labels.keys():
+                loss += weights[2]*mae(p_labels['energy'], p_outputs['energy'])
+
+            if 'direction' in p_labels.keys():
+                loss += weights[3]*mae(p_labels['direction'], p_outputs['direction'])
+                     
+            return loss
+
     return generator_loss   

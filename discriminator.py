@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, losses
 
@@ -87,6 +88,13 @@ def get_discriminator_loss(loss_name='basic'):
         def discriminator_loss(labels, d_outputs):
             mse = losses.MeanSquaredError()
             loss = mse(labels, d_outputs)
+
+            return loss
+        
+    if loss_name == 'w_gp':
+        def discriminator_loss(labels, d_outputs):
+            alphas = -(labels*2-1) # If label smoothing is applied use -(labels/0.9*2-1)
+            loss = tf.reduce_mean(alphas*d_outputs) # fake_loss - real_loss
 
             return loss
 

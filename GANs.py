@@ -15,7 +15,8 @@ class GANs(keras.Model):
         generator,
         predictor,
         discriminator_extra_steps=1,
-        generator_extra_steps=1
+        generator_extra_steps=1,
+        gp_weight=None,
     ):
         super(GANs, self).__init__()
         self.discriminator = discriminator
@@ -23,6 +24,7 @@ class GANs(keras.Model):
         self.predictor = predictor
         self.d_steps = discriminator_extra_steps
         self.g_steps = generator_extra_steps
+        self.gp_weight = gp_weight
 
 
     def compile(self, d_optimizer, g_optimizer, d_loss_fn, g_loss_fn):
@@ -31,6 +33,30 @@ class GANs(keras.Model):
         self.g_optimizer = g_optimizer
         self.d_loss_fn = d_loss_fn
         self.g_loss_fn = g_loss_fn
+
+    
+    def _gradient_penalty(self, batch_size, real_images, generated_images):
+        """ Calculates the gradient penalty.
+        This loss is calculated on an interpolated image
+        and added to the discriminator loss.
+        """
+        # Get the interpolated image
+        alpha = tf.random.normal([batch_size, 1, 1, 1], 0.0, 1.0)
+        diff = generated_images - real_images
+        interpolated = real_images + alpha * diff
+
+        with tf.GradientTape() as gp_tape:
+            gp_tape.watch(interpolated)
+            # 1. Get the discriminator output for this interpolated image.
+            pred = self.discriminator(interpolated, training=True)
+
+        # 2. Calculate the gradients w.r.t to this interpolated image.
+        grads = gp_tape.gradient(pred, [interpolated])[0]
+        # 3. Calculate the norm of the gradients.
+        norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3]))
+        gp = tf.reduce_mean((norm - 1.0) ** 2)
+        
+        return gp
 
 
     def _get_generator_loss_and_grads(self, batch_size, labels):
@@ -41,8 +67,8 @@ class GANs(keras.Model):
             d_outputs = self.discriminator(generated_images, training=False)
             p_outputs = self.predictor(generated_images)
             # Calculate the generator loss
-            # disc_labels now are zeros (real), since the generator expects to fool the discriminator
-            g_loss = self.g_loss_fn(d_outputs, p_outputs, tf.zeros((batch_size, 1)), labels)
+            # disc_labels now are ones (real), since the generator expects to fool the discriminator
+            g_loss = self.g_loss_fn(d_outputs, p_outputs, tf.ones((batch_size, 1)), labels)
         
         # Get the gradients w.r.t the generator loss
         g_gradient = tape.gradient(g_loss, self.generator.trainable_variables)
@@ -62,12 +88,19 @@ class GANs(keras.Model):
         return g_loss
 
 
-    def _get_discriminator_loss_and_grads(self, images, labels):
+    def _get_discriminator_loss_and_grads(self, batch_size, real_images, generated_images):
+        combined_images = tf.concat([generated_images, real_images], axis=0)
+        combined_labels = tf.concat([tf.zeros((batch_size, 1)), tf.ones((batch_size, 1))], axis=0)
         with tf.GradientTape() as tape:
             # Get the logits for the images
-            d_outputs = self.discriminator(images, training=True)
+            d_outputs = self.discriminator(combined_images, training=True)
             # Calculate the discriminator loss using the fake and real image logits
-            d_loss = self.d_loss_fn(labels, d_outputs)
+            d_loss = self.d_loss_fn(combined_labels, d_outputs)
+            if self.gp_weight:
+                # Calculate the gradient penalty
+                gp = self._gradient_penalty(batch_size, real_images, generated_images)
+                # Add the gradient penalty to the original discriminator loss
+                d_loss += gp * self.gp_weight
         
         # Get the gradients w.r.t the discriminator loss
         d_gradient = tape.gradient(d_loss, self.discriminator.trainable_variables)
@@ -84,7 +117,7 @@ class GANs(keras.Model):
             combined_labels = tf.concat([tf.ones((batch_size, 1)), tf.zeros((batch_size, 1))], axis=0)
             # Get discriminator loss and gradients
             # TODO: for images in zip((real_images, generated_images), (tf.ones((batch_size, 1)), tf.zeros((batch_size, 1)))):
-            d_loss, d_gradient = self._get_discriminator_loss_and_grads(combined_images, combined_labels)
+            d_loss, d_gradient = self._get_discriminator_loss_and_grads(batch_size, real_images, generated_images)
             # Update the weights of the discriminator using the discriminator optimizer
             self.d_optimizer.apply_gradients(
                 zip(d_gradient, self.discriminator.trainable_variables)

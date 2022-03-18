@@ -32,8 +32,9 @@ gans = GANs(
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
-    discriminator_extra_steps=1,
-    generator_extra_steps=1
+    discriminator_extra_steps=2, # TODO: should be 0 for no extra steps
+    generator_extra_steps=1,
+    gp_weight=10,
 )
 
 # Instantiate the optimizer for both networks
@@ -41,8 +42,8 @@ generator_optimizer = optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0
 discriminator_optimizer = optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9) 
 
 # Get loss functions
-generator_loss = get_generator_loss()
-discriminator_loss = get_discriminator_loss()
+generator_loss = get_generator_loss('w_gp')
+discriminator_loss = get_discriminator_loss('w_gp')
 
 # Compile the GANs model.
 gans.compile(
