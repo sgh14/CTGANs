@@ -16,7 +16,7 @@ class GANs(keras.Model):
         predictor,
         discriminator_extra_steps=1,
         generator_extra_steps=1,
-        gp_weight=None,
+        gp_weight=None
     ):
         super(GANs, self).__init__()
         self.discriminator = discriminator
@@ -25,7 +25,7 @@ class GANs(keras.Model):
         self.d_steps = discriminator_extra_steps
         self.g_steps = generator_extra_steps
         self.gp_weight = gp_weight
-
+        
 
     def compile(self, d_optimizer, g_optimizer, d_loss_fn, g_loss_fn):
         super(GANs, self).compile()
@@ -127,8 +127,8 @@ class GANs(keras.Model):
     def train_step(self, data):
         # Unpack the data.
         features, labels = data
-        real_images = features['images']
-        # TODO: this should be unnecessary and should be done by KerasBatchGenerator
+        real_images = features['images'] #*2/self.max_intensity - 1
+        # TODO: this should be unnecessary
         for task in labels.keys():
             # TODO: remove 2 and task=='energy' to generalize.
             label_shape = 2 if task != 'energy' else 1
@@ -206,6 +206,8 @@ class Plot_and_save(callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         for key in ('g_loss', 'd_loss'):
             self.logs[key].append(logs[key])
+        
+        self._plot_loss(self.logs)
 
         if epoch%self.epochs == 0:
             self._generate_and_save(epoch)

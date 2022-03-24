@@ -5,10 +5,7 @@ from ctlearn.utils import *
 
 
 # TODO: scale images to [-1, 1] range
-def load_data(config_path, mode, batch_size=64, shuffle=False):
-    with open(config_path, 'r') as config_file:
-        config = yaml.safe_load(config_file)
-
+def load_data(config, batch_size=64, shuffle=False, mode='train'):
     # Set up the DL1DataReader
     config['Data'], data_format = setup_DL1DataReader(config, mode)
     # Create data reader

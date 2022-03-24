@@ -15,7 +15,8 @@ class TransposeConvBlock(layers.Layer):
         use_batchnorm=True,
         use_bias=False,
         use_dropout=False,
-        drop_value=0.3
+        drop_value=0.3,
+        kernel_initializer='orthogonal'
     ):
         super(TransposeConvBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -26,7 +27,8 @@ class TransposeConvBlock(layers.Layer):
             kernel_size,
             strides=strides,
             padding=padding,
-            use_bias=use_bias
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer
         )
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
@@ -57,7 +59,8 @@ class UpsampleBlock(layers.Layer):
         use_batchnorm=True,
         use_bias=False,
         use_dropout=False,
-        drop_value=0.3
+        drop_value=0.3,
+        kernel_initializer='orthogonal'
     ):
         super(UpsampleBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -69,7 +72,8 @@ class UpsampleBlock(layers.Layer):
             kernel_size,
             strides=strides,
             padding=padding,
-            use_bias=use_bias
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer
         )
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
@@ -90,18 +94,20 @@ class UpsampleBlock(layers.Layer):
 
 
 class Generator(keras.Model):
-    def __init__(self, latent_dim, upsampling=True):
+    def __init__(self, g_config):
         super(Generator, self).__init__(name='generator')
-        self.latent_dim = latent_dim
-        self.dense = layers.Dense(3 * 3 * 256, use_bias=False)
+        self.latent_dim = g_config['latent_dim']
+        self.dense = layers.Dense(**g_config['layers']['dense'])
         self.batch_normalization = layers.BatchNormalization()
         self.activation = layers.LeakyReLU(0.2)
-        self.reshape = layers.Reshape((3, 3, 256))
-        self.upsample_block1 = UpsampleBlock(128) if upsampling else TransposeConvBlock(128)
-        self.upsample_block2 = UpsampleBlock(64) if upsampling else TransposeConvBlock(64)
-        self.upsample_block3 = UpsampleBlock(32) if upsampling else TransposeConvBlock(32)
-        self.upsample_block4 = UpsampleBlock(1) if upsampling else TransposeConvBlock(1) #layers.Activation("tanh"))
-        self.cropping = layers.Cropping2D(((2, 3), (2, 3)))
+        self.reshape = layers.Reshape(**g_config['layers']['reshape'])
+        self.upsample_blocks = []
+        for block_config in g_config['layers']['upsample_blocks']:
+            block = UpsampleBlock(**block_config) if g_config['upsampling'] else TransposeConvBlock(**block_config)
+            self.upsample_blocks.append(block)
+
+        #layers.Activation("tanh"))
+        self.cropping = layers.Cropping2D(**g_config['layers']['cropping'])
 
 
     def _get_generator_inputs(self, labels):
@@ -118,19 +124,14 @@ class Generator(keras.Model):
     
 
     def call(self, labels, training=False):
-        x = self.dense(self._get_generator_inputs(labels))
+        g_inputs = self._get_generator_inputs(labels)
+        x = self.dense(g_inputs)
         x = self.batch_normalization(inputs=x, training=training)
         x = self.activation(x)
         x = self.reshape(x)
-        # Upsample to (6, 6, 128)
-        x = self.upsample_block1(inputs=x, training=training)
-        # Upsample to (12, 12, 64)
-        x = self.upsample_block2(inputs=x, training=training)
-        # Upsample to (24, 24, 32)
-        x = self.upsample_block3(inputs=x, training=training)
-        # Upsample to (48, 48, 1)
-        x = self.upsample_block4(inputs=x, training=training) 
-        # Crop to (43, 43, 1)
+        for block in self.upsample_blocks:
+            x = block(inputs=x, training=training)
+        
         x = self.cropping(x)
 
         return x
@@ -144,16 +145,16 @@ def get_generator_loss(loss_name='basic', weights=np.array([1, 1, 1, 1])):
             # use from_logits=True to avoid using sigmoid activation when defining the discriminator
             bce = losses.BinaryCrossentropy(from_logits=True)
             cce = losses.CategoricalCrossentropy()
-            mae = losses.MeanAbsoluteError()
+            mse = losses.MeanSquaredError()
             loss = weights[0]*bce(d_labels, d_outputs)
             if 'particletype' in p_labels.keys():
                 loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
 
             if 'energy' in p_labels.keys():
-                loss += weights[2]*mae(p_labels['energy'], p_outputs['energy'])
+                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
 
             if 'direction' in p_labels.keys():
-                loss += weights[3]*mae(p_labels['direction'], p_outputs['direction'])
+                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
                      
             return loss
 
@@ -161,32 +162,31 @@ def get_generator_loss(loss_name='basic', weights=np.array([1, 1, 1, 1])):
         def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
             mse = losses.MeanSquaredError()
             cce = losses.CategoricalCrossentropy()
-            mae = losses.MeanAbsoluteError()
             loss = weights[0]*mse(d_labels, d_outputs)
             if 'particletype' in p_labels.keys():
                 loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
 
             if 'energy' in p_labels.keys():
-                loss += weights[2]*mae(p_labels['energy'], p_outputs['energy'])
+                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
 
             if 'direction' in p_labels.keys():
-                loss += weights[3]*mae(p_labels['direction'], p_outputs['direction'])
+                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
                      
             return loss
 
     if loss_name == 'w_gp':
         def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
             cce = losses.CategoricalCrossentropy()
-            mae = losses.MeanAbsoluteError()
+            mse = losses.MeanSquaredError()
             loss = weights[0]*(-tf.reduce_mean(d_outputs))
             if 'particletype' in p_labels.keys():
                 loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
 
             if 'energy' in p_labels.keys():
-                loss += weights[2]*mae(p_labels['energy'], p_outputs['energy'])
+                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
 
             if 'direction' in p_labels.keys():
-                loss += weights[3]*mae(p_labels['direction'], p_outputs['direction'])
+                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
                      
             return loss
 

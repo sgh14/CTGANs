@@ -14,7 +14,8 @@ class ConvBlock(layers.Layer):
         use_batchnorm=False,
         use_bias=True,
         use_dropout=False,
-        drop_value=0.3
+        drop_value=0.3,
+        kernel_initializer='orthogonal'
     ):
         super(ConvBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -25,9 +26,10 @@ class ConvBlock(layers.Layer):
             kernel_size,
             strides=strides,
             padding=padding,
-            use_bias=use_bias
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer
         )
-        # TODO: make sure batchnorm and dropout don't appear in model_plot when use_bn and use_drop = False
+      
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
         self.dropout = layers.Dropout(drop_value)
@@ -46,28 +48,23 @@ class ConvBlock(layers.Layer):
 
 
 class Discriminator(keras.Model):
-    def __init__(self):
+    def __init__(self, d_config):
         super(Discriminator, self).__init__(name='discriminator')
-        self.zeropadding = layers.ZeroPadding2D(((2, 3), (2, 3)))
-        self.conv_block1 = ConvBlock(64)
-        self.conv_block2 = ConvBlock(128, use_dropout=True)
-        self.conv_block3 = ConvBlock(256, use_dropout=True)
-        self.conv_block4 = ConvBlock(512)
+        self.zeropadding = layers.ZeroPadding2D(**d_config['layers']['zeropadding'])
+        self.conv_blocks = []
+        for block_config in d_config['layers']['conv_blocks']:
+            self.conv_blocks.append(ConvBlock(**block_config))
+        
         self.flatten = layers.Flatten()
         self.dropout = layers.Dropout(0.2)        
-        self.dense = layers.Dense(1) # default activation is linear
+        self.dense = layers.Dense(1, kernel_initializer='orthogonal') # default activation is linear
     
 
     def call(self, inputs, training=False):
         x = self.zeropadding(inputs)
-        # Downsample to (24, 24, 64)
-        x = self.conv_block1(inputs=x, training=training)
-        # Downsample to (12, 12, 128)
-        x = self.conv_block2(inputs=x, training=training)
-        # Downsample to (6, 6, 256)
-        x = self.conv_block3(inputs=x, training=training)
-        # Downsample to (3, 3, 512)
-        x = self.conv_block4(inputs=x, training=training)
+        for block in self.conv_blocks:
+            x = block(inputs=x, training=training)
+
         x = self.flatten(x)
         x = self.dropout(inputs=x, training=training)
         x = self.dense(x)
