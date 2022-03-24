@@ -89,15 +89,13 @@ class GANs(keras.Model):
 
 
     def _get_discriminator_loss_and_grads(self, batch_size, real_images, generated_images):
-        # combined_images = tf.concat([generated_images, real_images], axis=0)
-        # combined_labels = tf.concat([tf.zeros((batch_size, 1)), tf.ones((batch_size, 1))], axis=0)
         with tf.GradientTape() as tape:
             # Get the logits for the images
             d_outputs_on_real = self.discriminator(real_images, training=True)
             d_outputs_on_generated = self.discriminator(generated_images, training=True)
             # Calculate the discriminator loss using the fake and real image logits
             d_loss = self.d_loss_fn(tf.ones((batch_size, 1)), d_outputs_on_real)\
-                    + self.d_loss_fn(tf.zeros((batch_size, 1)), d_outputs_on_generated)
+                   + self.d_loss_fn(tf.zeros((batch_size, 1)), d_outputs_on_generated)
             if self.gp_weight:
                 # Calculate the gradient penalty
                 gp = self._gradient_penalty(batch_size, real_images, generated_images)
@@ -116,7 +114,6 @@ class GANs(keras.Model):
             # Generate fake images
             generated_images = self.generator(labels, training=False)
             # Get discriminator loss and gradients
-            # TODO: for images in zip((real_images, generated_images), (tf.ones((batch_size, 1)), tf.zeros((batch_size, 1)))):
             d_loss, d_gradient = self._get_discriminator_loss_and_grads(batch_size, real_images, generated_images)
             # Update the weights of the discriminator using the discriminator optimizer
             self.d_optimizer.apply_gradients(
