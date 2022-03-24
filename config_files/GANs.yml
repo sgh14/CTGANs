@@ -1,8 +1,6 @@
 Data_format: 'dl1dh'
 Reco: ['energy', 'direction'] # 'particletype', 
 Data:
-    # Allow to overwrite config setting based on tasks selection
-    # allow_overwrite: true
     file_list: '/home/sgarcia/code/CTGANs/data_files/gamma-diffuse.txt' # TODO: train.txt
     mode: 'mono' # 'stereo'
     selected_telescope_types: ['LST_MAGIC_MAGICCam']
@@ -19,9 +17,107 @@ Data:
         #     'LSTCam': [60, 60, 1]
         mask_interpolation: false
     parameter_selection: 
-        - {col_name: "hillas_intensity", min_value: 50.0} # 200.0}
-        - {col_name: "leakage_intensity_width_2", max_value: 0.2} # 0.0}
+        - {col_name: "hillas_intensity", min_value: 200.0} # 200.0}
+        - {col_name: "leakage_intensity_width_2", max_value: 0.1} # 0.0}
 Input:
     shuffle: true
-    batch_size_per_worker: 64
-    concat_telescopes: false # true
+    batch_size: 512
+Predictor:
+    # Possible keys:
+    # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    # - config_path: [string: path to the config.yml file used by CTLearn in case there isn't any predefined model]
+    predefined_model_path: 'models/predictor'
+    config_path: 'config_files/predictor.yml'
+Generator:
+    # Possible keys:
+    # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    # - latent_dim: [int: length of the noise input vector]
+    # - upsampling: [bool: whether to use upsampling or deconvolution layers]
+    # - spectral_normalization: [bool: whether to apply spectral normalization to layers]
+    # - layers:
+    #        dense: [dict: dictionary with parameters accepted by layers.Dense]
+    #        reshape: [dict: dictionary with parameters accepted by layers.Reshape]
+    #        upsample_blocks: [
+    #                  {filters: [int: number of filters],
+    #                   kernel_size: [3, 3] if upsampling else [4, 4],
+    #                   strides: [1, 1] if upsampling else [2, 2],
+    #                   up_size: [2, 2], # This parameter is only avaliable if upsampling is true
+    #                   padding: "same",
+    #                   use_batchnorm: true,
+    #                   use_bias: false,
+    #                   use_dropout: false,
+    #                   drop_value: 0.3,
+    #                   kernel_initializer: 'orthogonal'}
+    #        ]
+    #        cropping: [dict: dictionary with parameters accepted by layer.Cropping2D]
+    # - loss:
+    #       loss_name: 'basic' # keyword associated with the desired loss ('basic', 'least_squares', 'w_gp')
+    #       weights: [1, 1, 1, 1] # [d_weight, particle_weight, energy_weight, direction_weight]
+    predefined_model_path: false
+    latent_dim: 512
+    upsampling: true
+    spectral_normalization: true
+    layers:
+        dense: {units: 4608, use_bias: false, kernel_initializer: orthogonal}
+        reshape: {target_shape: [3, 3, 512]}
+        upsample_blocks: [
+            {filters: 256}, # Upsample to (6, 6, 128)
+            {filters: 128}, # Upsample to (12, 12, 64)
+            {filters: 64}, # Upsample to (24, 24, 32)
+            {filters: 1, use_batchnorm: false} # Upsample to (48, 48, 1)
+        ]
+        cropping: {cropping: [[2, 3], [2, 3]]} # Crop to (43, 43, 1)
+    loss: 
+        loss_name: w_gp
+        weights: [1, 0.3, 0.3, 0.3]
+Discriminator:
+    # Possible keys:
+    # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    # - spectral_normalization: [bool: whether to apply spectral normalization to layers]
+    # - layers:
+    #        zeropadding: [dict: dictionary with parameters accepted by layers.ZeroPadding2D]
+    #        conv_blocks: [
+    #             {filters: [int: number of filters],
+    #              kernel_size: [5, 5],
+    #              strides: [2, 2],
+    #              padding: "same",
+    #              use_batchnorm: false,
+    #              use_bias: true,
+    #              use_dropout: false,
+    #              drop_value: 0.3,
+    #              kernel_initializer: 'orthogonal'}
+    #        ]
+    # - loss:
+    #       loss_name: 'basic' # keyword associated with the desired loss ('basic', 'least_squares', 'w_gp')
+    predefined_model_path: false
+    spectral_normalization: true
+    layers:
+        zeropadding: {padding: [[2, 3], [2, 3]]}
+        conv_blocks: [
+            {filters: 128, use_batchnorm: false}, # Downsample to (24, 24, 64)
+            {filters: 256, use_dropout: true, use_batchnorm: True}, # Downsample to (12, 12, 128)
+            {filters: 512, use_dropout: true, use_batchnorm: True}, # Downsample to (6, 6, 256)
+            {filters: 1024, use_batchnorm: True} # Downsample to (3, 3, 512)
+        ]
+    loss: 
+        loss_name: w_gp
+GANs:
+    # Possible keys:
+    # - discriminator_extra_steps: 1 # discriminator training steps for bacth
+    # - generator_extra_steps: 1 # generator training steps for bacth
+    # - gp_weight: 10 # gradient penalty weight --> set to 0 or false to avoid gradient penalty
+    # - epochs: [int: training epochs]
+    discriminator_extra_steps: 4
+    generator_extra_steps: 1
+    gp_weight: false
+    epochs: 100
+Callback:
+    # Possible keys:
+    # - epochs: 1 # Number of epochs between every checkpoint
+    # - nrows: 5 # Number of rows in the grid of generated images
+    # - ncols: 5 # Number of columns in the grid of generated images
+    # - images_dir: 'images' # Directory to save the generated images and loss plot
+    # - models_dir: 'models' # Directory to save the models
+    epochs: 1
+    images_dir: images
+    models_dir: models

@@ -10,13 +10,14 @@ def train_predictor(config_path):
     
     run_model(config, mode='train')
 
+    return config['Logging']['model_directory']
 
-def get_predictor(config_path, models_dir='models', model_name='predictor_lite'):
-    os.makedirs(models_dir, exist_ok=True)
-    predictor_path = os.path.join(models_dir, model_name)
-    if os.path.relpath(predictor_path, models_dir) not in os.listdir(models_dir):
-        train_predictor(config_path)
 
-    predictor = models.load_model(predictor_path)
+def get_predictor(predefined_model_path, config_path):
+    if predefined_model_path and os.path.exists(predefined_model_path):
+        predictor = models.load_model(predefined_model_path)
+    else:
+        predictor_path = train_predictor(config_path)
+        predictor = models.load_model(predictor_path)
 
     return predictor

@@ -2,7 +2,7 @@
 
 ## Set up
 
-Only CTLearn installation is required:
+First, CTLearn installation is required:
 
 1. `git clone https://github.com/ctlearn-project/ctlearn`
 2. `cd ctlearn`
@@ -10,6 +10,10 @@ Only CTLearn installation is required:
 4. `conda env create -f environment-gpu.yml`
 5. `conda activate ctlearn_tf2`
 6. `pip install .`
+
+Additionally, the following installation is necessary:
+
+7. `pip install tensorflow-addons`
 
 To plot model graphs:
 
@@ -25,7 +29,7 @@ First, update `config.yml` paths and make sure that the images have the same dim
 
 ## Results
 
-Generated images after 1 epoch of training with a dataset of over 2.000.000 images:
+Generated images after 87 epochs of training with a dataset of over 1.400.000 images:
 
 <img title="generated_images" src="images/generated_images.png">
 
