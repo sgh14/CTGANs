@@ -16,7 +16,7 @@ class GANs(keras.Model):
         predictor,
         discriminator_extra_steps=1,
         generator_extra_steps=1,
-        gp_weight=None
+        gp_weight=10
     ):
         super(GANs, self).__init__()
         self.discriminator = discriminator
@@ -89,19 +89,21 @@ class GANs(keras.Model):
 
 
     def _get_discriminator_loss_and_grads(self, batch_size, real_images, generated_images):
-        combined_images = tf.concat([generated_images, real_images], axis=0)
-        combined_labels = tf.concat([tf.zeros((batch_size, 1)), tf.ones((batch_size, 1))], axis=0)
+        # combined_images = tf.concat([generated_images, real_images], axis=0)
+        # combined_labels = tf.concat([tf.zeros((batch_size, 1)), tf.ones((batch_size, 1))], axis=0)
         with tf.GradientTape() as tape:
             # Get the logits for the images
-            d_outputs = self.discriminator(combined_images, training=True)
+            d_outputs_on_real = self.discriminator(real_images, training=True)
+            d_outputs_on_generated = self.discriminator(generated_images, training=True)
             # Calculate the discriminator loss using the fake and real image logits
-            d_loss = self.d_loss_fn(combined_labels, d_outputs)
+            d_loss = self.d_loss_fn(tf.ones((batch_size, 1)), d_outputs_on_real)\
+                    + self.d_loss_fn(tf.zeros((batch_size, 1)), d_outputs_on_generated)
             if self.gp_weight:
                 # Calculate the gradient penalty
                 gp = self._gradient_penalty(batch_size, real_images, generated_images)
                 # Add the gradient penalty to the original discriminator loss
-                d_loss += gp * self.gp_weight
-        
+                d_loss += gp * self.gp_weight                
+
         # Get the gradients w.r.t the discriminator loss
         d_gradient = tape.gradient(d_loss, self.discriminator.trainable_variables)
 
@@ -127,8 +129,8 @@ class GANs(keras.Model):
     def train_step(self, data):
         # Unpack the data.
         features, labels = data
-        real_images = features['images'] #*2/self.max_intensity - 1
         # TODO: this should be unnecessary
+        real_images = tf.reshape(features['images'], (-1, 43, 43, 1)) #*2/self.max_intensity - 1
         for task in labels.keys():
             # TODO: remove 2 and task=='energy' to generalize.
             label_shape = 2 if task != 'energy' else 1
