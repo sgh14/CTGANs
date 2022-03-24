@@ -95,9 +95,9 @@ Discriminator:
         zeropadding: {padding: [[2, 3], [2, 3]]}
         conv_blocks: [
             {filters: 128, use_batchnorm: false}, # Downsample to (24, 24, 64)
-            {filters: 256, use_dropout: true}, # Downsample to (12, 12, 128)
-            {filters: 512, use_dropout: true}, # Downsample to (6, 6, 256)
-            {filters: 1024} # Downsample to (3, 3, 512)
+            {filters: 256, use_dropout: true, use_batchnorm: True}, # Downsample to (12, 12, 128)
+            {filters: 512, use_dropout: true, use_batchnorm: True}, # Downsample to (6, 6, 256)
+            {filters: 1024, use_batchnorm: True} # Downsample to (3, 3, 512)
         ]
     loss: 
         loss_name: w_gp
@@ -105,11 +105,11 @@ GANs:
     # Possible keys:
     # - discriminator_extra_steps: 1 # discriminator training steps for bacth
     # - generator_extra_steps: 1 # generator training steps for bacth
-    # - gp_weight: None # gradient penalty weight --> set to 0 or false to avoid gradient penalty
+    # - gp_weight: 10 # gradient penalty weight --> set to 0 or false to avoid gradient penalty
     # - epochs: [int: training epochs]
     discriminator_extra_steps: 4
     generator_extra_steps: 1
-    gp_weight: 10
+    gp_weight: false
     epochs: 100
 Callback:
     # Possible keys:
