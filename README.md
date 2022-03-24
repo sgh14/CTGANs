@@ -2,7 +2,7 @@
 
 ## Set up
 
-Only CTLearn installation is required:
+First, CTLearn installation is required:
 
 1. `git clone https://github.com/ctlearn-project/ctlearn`
 2. `cd ctlearn`
@@ -10,6 +10,10 @@ Only CTLearn installation is required:
 4. `conda env create -f environment-gpu.yml`
 5. `conda activate ctlearn_tf2`
 6. `pip install .`
+
+Additionally, the following installation is necessary:
+
+7. `pip install tensorflow-addons`
 
 To plot model graphs:
 
