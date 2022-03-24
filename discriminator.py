@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, losses
+from tensorflow_addons.layers import SpectralNormalization
 
 
 class ConvBlock(layers.Layer):
@@ -15,7 +16,8 @@ class ConvBlock(layers.Layer):
         use_bias=True,
         use_dropout=False,
         drop_value=0.3,
-        kernel_initializer='orthogonal'
+        kernel_initializer='orthogonal',
+        spectral_norm=True
     ):
         super(ConvBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -29,6 +31,9 @@ class ConvBlock(layers.Layer):
             use_bias=use_bias,
             kernel_initializer=kernel_initializer
         )
+
+        if spectral_norm:
+            self.conv = SpectralNormalization(self.conv)
       
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
@@ -50,14 +55,17 @@ class ConvBlock(layers.Layer):
 class Discriminator(keras.Model):
     def __init__(self, d_config):
         super(Discriminator, self).__init__(name='discriminator')
+        spectral_norm = d_config['spectral_normalization']
         self.zeropadding = layers.ZeroPadding2D(**d_config['layers']['zeropadding'])
         self.conv_blocks = []
         for block_config in d_config['layers']['conv_blocks']:
-            self.conv_blocks.append(ConvBlock(**block_config))
+            self.conv_blocks.append(ConvBlock(**block_config, spectral_norm=spectral_norm))
         
         self.flatten = layers.Flatten()
         self.dropout = layers.Dropout(0.2)        
         self.dense = layers.Dense(1, kernel_initializer='orthogonal') # default activation is linear
+        if spectral_norm:
+            self.dense = SpectralNormalization(self.dense)
     
 
     def call(self, inputs, training=False):

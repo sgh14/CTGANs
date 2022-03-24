@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, losses
+from tensorflow_addons.layers import SpectralNormalization
 import numpy as np
 
 
@@ -16,7 +17,8 @@ class TransposeConvBlock(layers.Layer):
         use_bias=False,
         use_dropout=False,
         drop_value=0.3,
-        kernel_initializer='orthogonal'
+        kernel_initializer='orthogonal',
+        spectral_norm=True
     ):
         super(TransposeConvBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -30,6 +32,10 @@ class TransposeConvBlock(layers.Layer):
             use_bias=use_bias,
             kernel_initializer=kernel_initializer
         )
+
+        if spectral_norm:
+            self.conv_transpose = SpectralNormalization(self.conv_transpose)
+
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
         self.dropout = layers.Dropout(drop_value)
@@ -60,7 +66,8 @@ class UpsampleBlock(layers.Layer):
         use_bias=False,
         use_dropout=False,
         drop_value=0.3,
-        kernel_initializer='orthogonal'
+        kernel_initializer='orthogonal',
+        spectral_norm=True
     ):
         super(UpsampleBlock, self).__init__()
         self.use_batchnorm = use_batchnorm
@@ -75,6 +82,10 @@ class UpsampleBlock(layers.Layer):
             use_bias=use_bias,
             kernel_initializer=kernel_initializer
         )
+
+        if spectral_norm:
+            self.conv = SpectralNormalization(self.conv)
+
         self.batch_normalization = layers.BatchNormalization()
         self.activation = activation
         self.dropout = layers.Dropout(drop_value)
@@ -96,14 +107,22 @@ class UpsampleBlock(layers.Layer):
 class Generator(keras.Model):
     def __init__(self, g_config):
         super(Generator, self).__init__(name='generator')
+        spectral_norm = g_config['spectral_normalization']
         self.latent_dim = g_config['latent_dim']
         self.dense = layers.Dense(**g_config['layers']['dense'])
+        if spectral_norm:
+            self.dense = SpectralNormalization(self.dense)
+
         self.batch_normalization = layers.BatchNormalization()
         self.activation = layers.LeakyReLU(0.2)
         self.reshape = layers.Reshape(**g_config['layers']['reshape'])
         self.upsample_blocks = []
         for block_config in g_config['layers']['upsample_blocks']:
-            block = UpsampleBlock(**block_config) if g_config['upsampling'] else TransposeConvBlock(**block_config)
+            if g_config['upsampling']:
+                block = UpsampleBlock(**block_config, spectral_norm=spectral_norm)
+            else:
+                block = TransposeConvBlock(**block_config, spectral_norm=spectral_norm)
+
             self.upsample_blocks.append(block)
 
         #layers.Activation("tanh"))
@@ -111,8 +130,6 @@ class Generator(keras.Model):
 
 
     def _get_generator_inputs(self, labels):
-        # TODO: allow labels to be a dict of arrays with shapes (batch, label_shape)
-        # and also (label_shape) for single generation
         # Sample random points in the latent space and concatenate the labels.
         batch_size = tf.shape(list(labels.values())[0])[0]
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))

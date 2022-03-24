@@ -32,7 +32,8 @@ Generator:
     # Possible keys:
     # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
     # - latent_dim: [int: length of the noise input vector]
-    # - upsampling: [bool: whether to use upsampling or deconvolution layers] 
+    # - upsampling: [bool: whether to use upsampling or deconvolution layers]
+    # - spectral_normalization: [bool: whether to apply spectral normalization to layers]
     # - layers:
     #        dense: [dict: dictionary with parameters accepted by layers.Dense]
     #        reshape: [dict: dictionary with parameters accepted by layers.Reshape]
@@ -55,6 +56,7 @@ Generator:
     predefined_model_path: false
     latent_dim: 512
     upsampling: true
+    spectral_normalization: true
     layers:
         dense: {units: 4608, use_bias: false, kernel_initializer: orthogonal}
         reshape: {target_shape: [3, 3, 512]}
@@ -71,6 +73,7 @@ Generator:
 Discriminator:
     # Possible keys:
     # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    # - spectral_normalization: [bool: whether to apply spectral normalization to layers]
     # - layers:
     #        zeropadding: [dict: dictionary with parameters accepted by layers.ZeroPadding2D]
     #        conv_blocks: [
@@ -87,6 +90,7 @@ Discriminator:
     # - loss:
     #       loss_name: 'basic' # keyword associated with the desired loss ('basic', 'least_squares', 'w_gp')
     predefined_model_path: false
+    spectral_normalization: true
     layers:
         zeropadding: {padding: [[2, 3], [2, 3]]}
         conv_blocks: [
