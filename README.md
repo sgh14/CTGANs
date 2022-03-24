@@ -25,7 +25,7 @@ First, update `config.yml` paths and make sure that the images have the same dim
 
 ## Results
 
-Generated images after 1 epoch of training with a dataset of over 2.000.000 images:
+Generated images after 87 epochs of training with a dataset of over 1.400.000 images:
 
 <img title="generated_images" src="images/generated_images.png">
 
