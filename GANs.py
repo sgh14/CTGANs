@@ -59,7 +59,7 @@ class GANs(keras.Model):
         return gp
 
 
-    def _get_generator_loss_and_grads(self, batch_size, labels):
+    def _get_g_loss_and_grads(self, batch_size, labels):
         with tf.GradientTape() as tape:
             # Generate fake images using the generator
             generated_images = self.generator(labels, training=True)
@@ -79,7 +79,7 @@ class GANs(keras.Model):
     def _generator_train_step(self, real_images, labels):
         batch_size = tf.shape(real_images)[0]
         for _ in range(self.g_steps):
-            g_loss, g_gradient = self._get_generator_loss_and_grads(batch_size, labels)
+            g_loss, g_gradient = self._get_g_loss_and_grads(batch_size, labels)
             # Update the weights of the generator using the generator optimizer
             self.g_optimizer.apply_gradients(
                 zip(g_gradient, self.generator.trainable_variables)
@@ -88,7 +88,7 @@ class GANs(keras.Model):
         return g_loss
 
 
-    def _get_discriminator_loss_and_grads(self, batch_size, real_images, generated_images):
+    def _get_d_loss_and_grads(self, batch_size, real_images, generated_images):
         with tf.GradientTape() as tape:
             # Get the logits for the images
             d_outputs_on_real = self.discriminator(real_images, training=True)
@@ -114,7 +114,7 @@ class GANs(keras.Model):
             # Generate fake images
             generated_images = self.generator(labels, training=False)
             # Get discriminator loss and gradients
-            d_loss, d_gradient = self._get_discriminator_loss_and_grads(batch_size, real_images, generated_images)
+            d_loss, d_gradient = self._get_d_loss_and_grads(batch_size, real_images, generated_images)
             # Update the weights of the discriminator using the discriminator optimizer
             self.d_optimizer.apply_gradients(
                 zip(d_gradient, self.discriminator.trainable_variables)
@@ -127,7 +127,7 @@ class GANs(keras.Model):
         # Unpack the data.
         features, labels = data
         # TODO: this should be unnecessary
-        real_images = tf.reshape(features['images'], (-1, 43, 43, 1)) #*2/self.max_intensity - 1
+        real_images = tf.reshape(features['images'], (-1, 43, 43, 2)) #*2/self.max_intensity - 1
         for task in labels.keys():
             # TODO: remove 2 and task=='energy' to generalize.
             label_shape = 2 if task != 'energy' else 1
@@ -144,17 +144,18 @@ class GANs(keras.Model):
 
 
 class Plot_and_save(callbacks.Callback):
-    def __init__(self, dataset, epochs=1, nrows=5, ncols=5, images_dir='images', models_dir='models'):
+    def __init__(self, dataset, epochs=1, nrows=5, ncols=5, images_dir='images', models_dir='models', initial_epoch=0):
         features, labels = dataset.__getitem__(0)
-        os.makedirs(models_dir, exist_ok=True)
-        os.makedirs(images_dir, exist_ok=True)
-        for file in os.listdir(models_dir):
-            if file.startswith('generator_') or file.startswith('discriminator_'):
-                shutil.rmtree(os.path.join(models_dir, file))
+        if initial_epoch == 0:
+            os.makedirs(models_dir, exist_ok=True)
+            os.makedirs(images_dir, exist_ok=True)
+            for file in os.listdir(models_dir):
+                if file.startswith('generator_') or file.startswith('discriminator_'):
+                    shutil.rmtree(os.path.join(models_dir, file))
 
-        for file in os.listdir(images_dir):
-            if file.startswith('generated_images_'):
-                os.remove(os.path.join(images_dir, file))
+            for file in os.listdir(images_dir):
+                if file.startswith('generated_images_'):
+                    os.remove(os.path.join(images_dir, file))
 
         self.labels = labels
         self.images = features['images']
@@ -163,14 +164,16 @@ class Plot_and_save(callbacks.Callback):
         self.ncols = ncols
         self.images_dir = images_dir
         self.models_dir = models_dir
+        self.initial_epoch = initial_epoch
         self.logs = {'g_loss': [], 'd_loss': []}
     
 
     def _plot_loss(self, logs={}):
         # Plot g_loss and d_loss
         fig, ax = plt.subplots()
-        ax.plot(logs['d_loss'], c='blue', label='d_loss')
-        ax.plot(logs['g_loss'], c='red', label='g_loss')
+        epochs = [epoch+self.initial_epoch for epoch in range(len(logs['d_loss']))]
+        ax.plot(epochs, logs['d_loss'], c='blue', label='d_loss')
+        ax.plot(epochs, logs['g_loss'], c='red', label='g_loss')
         ax.set_xlabel('Epoch')
         ax.set_ylabel('Loss')
         ax.legend()
@@ -178,6 +181,7 @@ class Plot_and_save(callbacks.Callback):
 
 
     def _generate_and_save(self, epoch):
+        epoch += self.initial_epoch
         # Save the generator and the discriminator
         self.model.generator.save(os.path.join(self.models_dir, f'generator_{epoch}'))
         self.model.discriminator.save(os.path.join(self.models_dir, f'discriminator_{epoch}'))
