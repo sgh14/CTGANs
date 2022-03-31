@@ -1,11 +1,10 @@
 #%%
-from tensorflow.keras import optimizers, models
-import os
+from tensorflow.keras import models
 
 from data_loader import *
 from predictor import *
-from discriminator import Discriminator, get_discriminator_loss
-from generator import Generator, get_generator_loss
+from discriminator import Discriminator, get_discriminator_loss, get_discriminator_optimizer
+from generator import Generator, get_generator_loss, get_generator_optimizer
 from GANs import *
 from data_generator import *
 
@@ -14,6 +13,10 @@ config_path = 'config_files/GANs.yml'
 with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
 
+g_config = config['Generator']
+d_config = config['Discriminator']
+gans_config = config['GANs']
+
 #%% LOAD DATA
 dataset = load_data(config, **config['Input'])
 
@@ -21,12 +24,12 @@ dataset = load_data(config, **config['Input'])
 predictor = get_predictor(**config['Predictor'])
 
 #%% BUILD THE GENERATOR
-g_path = config['Generator']['predefined_model_path']
-generator = models.load_model(g_path) if g_path else Generator(config['Generator'])
+g_path = g_config['predefined_model_path']
+generator = models.load_model(g_path) if g_path else Generator(g_config)
 
 #%% BUILD THE DISCRIMINATOR
-d_path = config['Discriminator']['predefined_model_path']
-discriminator = models.load_model(d_path) if d_path else Discriminator(config['Discriminator'])
+d_path = d_config['predefined_model_path']
+discriminator = models.load_model(d_path) if d_path else Discriminator(d_config)
 
 #%% BUILD GANS
 # Instantiate the GANs model.
@@ -34,14 +37,14 @@ gans = GANs(
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
-    discriminator_extra_steps=config['GANs']['discriminator_extra_steps'], # TODO: should be 0 for no extra steps
-    generator_extra_steps=config['GANs']['generator_extra_steps'],
-    gp_weight=config['GANs']['gp_weight']
+    discriminator_extra_steps=gans_config['discriminator_extra_steps'], # TODO: should be 0 for no extra steps
+    generator_extra_steps=gans_config['generator_extra_steps'],
+    gp_weight=gans_config['gp_weight']
 )
 
 # Instantiate the optimizer for both networks
-generator_optimizer = optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9)
-discriminator_optimizer = optimizers.Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.9) 
+generator_optimizer = get_generator_optimizer(**g_config['optimizer'])
+discriminator_optimizer = get_discriminator_optimizer(**d_config['optimizer'])
 
 # Get loss functions
 generator_loss = get_generator_loss(**config['Generator']['loss'])

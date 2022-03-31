@@ -1,5 +1,5 @@
 Logging:
-    model_directory: '/home/sgarcia/code/CTGANs/models/predictor'
+    model_directory: '/home/sgarcia/code/CTGANs/models/predictor2'
 Data_format: 'dl1dh'
 Reco: ['energy', 'direction'] # 'particletype', 
 Data:
@@ -10,7 +10,7 @@ Data:
     selected_telescope_types: ['LST_MAGIC_MAGICCam']
     shuffle: true
     seed: 1234
-    image_channels: ['image'] #, 'peak_time']
+    image_channels: ['image', 'peak_time']
     mapping_settings:
         camera_types: ['MAGICCam']
         mapping_method:
