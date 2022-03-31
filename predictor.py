@@ -8,6 +8,8 @@ def train_predictor(config_path):
     with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
     
+    # TODO: os.makedirs should be unnecessary
+    os.makedirs(config['Logging']['model_directory'], exist_ok=True)
     run_model(config, mode='train')
 
     return config['Logging']['model_directory']
