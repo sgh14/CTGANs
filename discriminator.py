@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers, losses
+from tensorflow.keras import layers, losses, optimizers
 from tensorflow_addons.layers import SpectralNormalization
 
 
@@ -80,27 +80,34 @@ class Discriminator(keras.Model):
         return x
 
 
-def get_discriminator_loss(loss_name='basic'):
-    if loss_name == 'basic':
-        def discriminator_loss(labels, d_outputs):
-            # use from_logits=True to avoid using sigmoid activation when defining the discriminator
-            bce = losses.BinaryCrossentropy(from_logits=True)
-            loss = bce(labels, d_outputs)
-
-            return loss
-
-    if loss_name == 'least_squares':
-        def discriminator_loss(labels, d_outputs):
-            mse = losses.MeanSquaredError()
-            loss = mse(labels, d_outputs)
-
-            return loss
+def get_discriminator_loss(name='bce', label_smoothing=0.1):
+    def wasserstein_loss(labels, d_outputs):
+        alphas = -(labels/(1-label_smoothing)*2-1) # map labels to fake=1 and real=-1
+        loss = tf.reduce_mean(alphas*d_outputs) # fake_loss - real_loss
         
-    if loss_name == 'w_gp':
-        def discriminator_loss(labels, d_outputs):
-            alphas = -(labels*2-1) # If label smoothing is applied use -(labels/0.9*2-1)
-            loss = tf.reduce_mean(alphas*d_outputs) # fake_loss - real_loss
+        return loss
 
-            return loss
+    loss_functions = {
+        # from_logits=True to avoid using sigmoid activation when defining the discriminator
+        'bce': losses.BinaryCrossentropy(from_logits=True),
+        'least_squares': losses.MeanSquaredError(),
+        'wasserstein': wasserstein_loss
+    }
+
+    loss_function = loss_functions[name]
+    def discriminator_loss(labels, d_outputs):
+        smoothed_labels = labels*(1-label_smoothing)
+        loss = loss_function(smoothed_labels, d_outputs)
+
+        return loss
 
     return discriminator_loss
+
+
+def get_discriminator_optimizer(parameters, name='adam'):
+    if name == 'adam':
+        optimizer = optimizers.Adam(**parameters)
+    elif name == 'rms':
+        optimizer = optimizers.RMSprop(**parameters)
+    
+    return optimizer

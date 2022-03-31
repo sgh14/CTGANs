@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers, losses
+from tensorflow.keras import layers, losses, optimizers
 from tensorflow_addons.layers import SpectralNormalization
 import numpy as np
 
@@ -156,55 +156,45 @@ class Generator(keras.Model):
 
 # TODO: implement a custom class that inherits from losses.Loss
 # See if this allows to implement gradient penalty inside the loss class
-def get_generator_loss(loss_name='basic', weights=np.array([1, 1, 1, 1])):
-    if loss_name == 'basic':
-        def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
-            # use from_logits=True to avoid using sigmoid activation when defining the discriminator
-            bce = losses.BinaryCrossentropy(from_logits=True)
-            cce = losses.CategoricalCrossentropy()
-            mse = losses.MeanSquaredError()
-            loss = weights[0]*bce(d_labels, d_outputs)
-            if 'particletype' in p_labels.keys():
-                loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
+def get_generator_loss(name='bce', weights=np.array([1, 1, 1, 1]), label_smoothing=0.1):
+    def wasserstein_loss(labels, d_outputs):
+        alphas = -(labels/(1-label_smoothing)*2-1) # map labels to fake=1 and real=-1
+        loss = tf.reduce_mean(alphas*d_outputs) # fake_loss - real_loss
+        
+        return loss
 
-            if 'energy' in p_labels.keys():
-                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
+    main_loss_functions = {
+        # from_logits=True to avoid using sigmoid activation when defining the discriminator
+        'bce': losses.BinaryCrossentropy(from_logits=True),
+        'least_squares': losses.MeanSquaredError(),
+        'wasserstein': wasserstein_loss
+    }
 
-            if 'direction' in p_labels.keys():
-                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
-                     
-            return loss
+    main_loss = main_loss_functions[name] # main loss function (for d_labels)
+    c_loss = losses.CategoricalCrossentropy() # classification loss function
+    r_loss = losses.MeanSquaredError() # regression loss function
 
-    if loss_name == 'least_squares':
-        def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
-            mse = losses.MeanSquaredError()
-            cce = losses.CategoricalCrossentropy()
-            loss = weights[0]*mse(d_labels, d_outputs)
-            if 'particletype' in p_labels.keys():
-                loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
+    def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
+        smoothed_d_labels = d_labels*(1-label_smoothing)
+        loss = weights[0]*main_loss(smoothed_d_labels, d_outputs)
+        if 'particletype' in p_labels.keys():
+            loss += weights[1]*c_loss(p_labels['particletype'], p_outputs['particletype'])
 
-            if 'energy' in p_labels.keys():
-                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
+        if 'energy' in p_labels.keys():
+            loss += weights[2]*r_loss(p_labels['energy'], p_outputs['energy'])
 
-            if 'direction' in p_labels.keys():
-                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
-                     
-            return loss
+        if 'direction' in p_labels.keys():
+            loss += weights[3]*r_loss(p_labels['direction'], p_outputs['direction'])
+                    
+        return loss
 
-    if loss_name == 'w_gp':
-        def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
-            cce = losses.CategoricalCrossentropy()
-            mse = losses.MeanSquaredError()
-            loss = weights[0]*(-tf.reduce_mean(d_outputs))
-            if 'particletype' in p_labels.keys():
-                loss += weights[1]*cce(p_labels['particletype'], p_outputs['particletype'])
+    return generator_loss
 
-            if 'energy' in p_labels.keys():
-                loss += weights[2]*mse(p_labels['energy'], p_outputs['energy'])
 
-            if 'direction' in p_labels.keys():
-                loss += weights[3]*mse(p_labels['direction'], p_outputs['direction'])
-                     
-            return loss
-
-    return generator_loss   
+def get_generator_optimizer(parameters, name='adam'):
+    if name == 'adam':
+        optimizer = optimizers.Adam(**parameters)
+    elif name == 'rms':
+        optimizer = optimizers.RMSprop(**parameters)
+    
+    return optimizer
