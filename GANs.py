@@ -11,6 +11,7 @@ from data_generator import plot_grid
 class GANs(keras.Model):
     def __init__(
         self,
+        dataset,
         discriminator,
         generator,
         predictor,
@@ -19,6 +20,10 @@ class GANs(keras.Model):
         gp_weight=10
     ):
         super(GANs, self).__init__()
+
+        features, labels = dataset.__getitem__(0)
+        self.img_shape = (dataset.batch_size, *dataset.img_shape)
+        self.labels_shape = {task: labels[task].shape for task in labels.keys()}
         self.discriminator = discriminator
         self.generator = generator
         self.predictor = predictor
@@ -127,13 +132,13 @@ class GANs(keras.Model):
         # Unpack the data.
         features, labels = data
         # TODO: this should be unnecessary
-        real_images = tf.reshape(features['images'], (-1, 43, 43, 2)) #*2/self.max_intensity - 1
+        real_images = tf.reshape(features['images'], self.img_shape) #*2/self.max_intensity - 1
         for task in labels.keys():
             # TODO: remove 2 and task=='energy' to generalize.
-            label_shape = 2 if task != 'energy' else 1
+            # label_shape = 2 if task != 'energy' else 1
             # label_shape = tf.cond(tf.rank(labels[task])==2, lambda: tf.shape(labels[task])[-1], lambda: 1)
             # label_shape = tf.shape(labels[task])[1] if tf.rank(labels[task]) == tf.constant(2) else 1
-            labels[task] = tf.reshape(labels[task], (-1, label_shape))
+            labels[task] = tf.reshape(labels[task], self.labels_shape[task])
 
         # Discriminator train step
         d_loss = self._discriminator_train_step(real_images, labels)

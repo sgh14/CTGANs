@@ -1,7 +1,7 @@
 Data_format: 'dl1dh'
 Reco: ['energy', 'direction'] # 'particletype', 
 Data:
-    file_list: '/home/sgarcia/code/CTGANs/data_files/gamma-diffuse.txt' # TODO: train.txt
+    file_list: '/home/sgarcia/code/CTGANs/data_files/gamma-diffuse-lite.txt' # TODO: train.txt
     mode: 'mono' # 'stereo'
     selected_telescope_types: ['LST_MAGIC_MAGICCam']
     shuffle: true
@@ -26,7 +26,7 @@ Predictor:
     # Possible keys:
     # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
     # - config_path: [string: path to the config.yml file used by CTLearn in case there isn't any predefined model]
-    predefined_model_path: '/home/sgarcia/code/CTGANs/models/predictor2'
+    predefined_model_path: '/home/sgarcia/code/CTGANs/models/predictor2_lite'
     config_path: 'config_files/predictor.yml'
 Generator:
     # Possible keys:
@@ -51,13 +51,13 @@ Generator:
     #        ]
     #        cropping: [dict: dictionary with parameters accepted by layer.Cropping2D]
     # - loss:
-    #       name: 'basic' # keyword associated with the desired loss ('basic', 'least_squares', 'w_gp')
+    #       name: 'bce' # keyword associated with the desired loss ('bce', 'least_squares', 'wasserstein')
     #       weights: [1, 1, 1, 1] # [d_weight, particle_weight, energy_weight, direction_weight]
     #       label_smoothing: 0.1 # smoothed_d_labels = d_labels*(1-label_smoothing)
     # - optimizer:
-    #       name: 'adam'
+    #       name: 'adam' # keyword associated with the desired optimizer ('adam', 'rms')
     #       parameters: [dict: parameters accepted by the corresponding tf implementation of the optimizer]
-    predefined_model_path: 'models/generator_13'
+    predefined_model_path: false #'models/generator_13'
     latent_dim: 512
     upsampling: true
     spectral_normalization: false
@@ -95,12 +95,12 @@ Discriminator:
     #              kernel_initializer: 'orthogonal'}
     #        ]
     # - loss:
-    #       name: 'basic' # keyword associated with the desired loss ('basic', 'least_squares', 'w_gp')
+    #       name: 'bce' # keyword associated with the desired loss ('bce', 'least_squares', 'wasserstein')
     #       label_smoothing: 0.1 # smoothed_labels = labels*(1-label_smoothing)
     # - optimizer:
-    #       name: 'adam'
+    #       name: 'adam' # keyword associated with the desired optimizer ('adam', 'rms')
     #       parameters: [dict: parameters accepted by the corresponding tf implementation of the optimizer]
-    predefined_model_path: 'models/discriminator_13'
+    predefined_model_path: false #'models/discriminator_13'
     spectral_normalization: false
     layers:
         zeropadding: {padding: [[2, 3], [2, 3]]}
@@ -132,10 +132,10 @@ Callback:
     # - ncols: 5 # Number of columns in the grid of generated images
     # - images_dir: 'images' # Directory to save the generated images and loss plot
     # - models_dir: 'models' # Directory to save the models
-    # - initial_epoch: 0 # Intial epoch, used only when retraining predefined models
+    # - initial_epoch: 0 # Intial epoch, used only when resuming training
     epochs: 1
     nrows: 5
     ncols: 5
     images_dir: images
     models_dir: models
-    initial_epoch: 14
+    initial_epoch: 0
