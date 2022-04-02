@@ -34,6 +34,7 @@ discriminator = models.load_model(d_path) if d_path else Discriminator(d_config)
 #%% BUILD GANS
 # Instantiate the GANs model.
 gans = GANs(
+    dataset=dataset,
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
@@ -60,4 +61,5 @@ gans.compile(
 
 #%% TRAIN GANS
 plot_and_save = Plot_and_save(dataset, **config['Callback'])
-history = gans.fit(dataset, epochs=config['GANs']['epochs'], verbose=1, callbacks=[plot_and_save])
+history = gans.fit(dataset, epochs=gans_config['epochs'], verbose=1, callbacks=[plot_and_save])
+
