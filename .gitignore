@@ -1,6 +1,6 @@
 /models/
 /__pycache__/
-/data_files/
 /misc/
 images/losses.png
 images/generated_images_*.png
+data_files/gamma-diffuse-lite.txt
