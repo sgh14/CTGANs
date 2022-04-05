@@ -6,14 +6,14 @@ First, CTLearn installation is required:
 
 1. `git clone https://github.com/ctlearn-project/ctlearn`
 2. `cd ctlearn`
-4. `conda env create -f environment-gpu.yml`
-5. `conda activate ctlearn`
-6. `pip install .`
+3. `conda env create -f environment-gpu.yml`
+4. `conda activate ctlearn`
+5. `pip install .`
 
 Additionally, the following installation is necessary:
 
-7. `pip install tensorflow-addons`
-8. `pip install --upgrade matplotlib`
+6. `pip install tensorflow-addons`
+7. `pip install --upgrade matplotlib`
 
 ## Usage
 
