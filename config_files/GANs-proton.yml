@@ -1,7 +1,7 @@
 Data_format: 'dl1dh'
 Reco: ['energy', 'direction'] # 'particletype', 
 Data:
-    file_list: '/home/sgarcia/code/CTGANs/data_files/proton-train.txt'
+    file_list: 'data_files/proton-train.txt'
     mode: 'mono' # 'stereo'
     selected_telescope_types: ['LST_MAGIC_MAGICCam']
     shuffle: true
