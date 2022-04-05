@@ -10,7 +10,7 @@ from GANs import GANs
 from callback import Checkpoint
 
 
-config_path = 'config_files/GANs.yml'
+config_path = input('Configuration file path: ') #'config_files/GANs.yml'
 with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
 
