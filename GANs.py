@@ -1,11 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import callbacks
-import matplotlib.pyplot as plt
-import os
-import shutil
-
-from data_generator import plot_grid
 
 
 class GANs(keras.Model):
@@ -15,8 +9,8 @@ class GANs(keras.Model):
         discriminator,
         generator,
         predictor,
-        discriminator_extra_steps=1,
-        generator_extra_steps=1,
+        discriminator_steps=1,
+        generator_steps=1,
         gp_weight=10
     ):
         super(GANs, self).__init__()
@@ -27,8 +21,8 @@ class GANs(keras.Model):
         self.discriminator = discriminator
         self.generator = generator
         self.predictor = predictor
-        self.d_steps = discriminator_extra_steps
-        self.g_steps = generator_extra_steps
+        self.d_steps = discriminator_steps
+        self.g_steps = generator_steps
         self.gp_weight = gp_weight
         
 
@@ -146,89 +140,4 @@ class GANs(keras.Model):
         g_loss = self._generator_train_step(real_images, labels)
         
         return {"d_loss": d_loss, "g_loss": g_loss}
-
-
-class Plot_and_save(callbacks.Callback):
-    def __init__(self, dataset, epochs=1, nrows=5, ncols=5, images_dir='images', models_dir='models', initial_epoch=0):
-        features, labels = dataset.__getitem__(0)
-        if initial_epoch == 0:
-            os.makedirs(models_dir, exist_ok=True)
-            os.makedirs(images_dir, exist_ok=True)
-            for file in os.listdir(models_dir):
-                if file.startswith('generator_') or file.startswith('discriminator_'):
-                    shutil.rmtree(os.path.join(models_dir, file))
-
-            for file in os.listdir(images_dir):
-                if file.startswith('generated_images_'):
-                    os.remove(os.path.join(images_dir, file))
-
-        self.labels = labels
-        self.images = features['images']
-        self.epochs = epochs
-        self.nrows = nrows
-        self.ncols = ncols
-        self.images_dir = images_dir
-        self.models_dir = models_dir
-        self.initial_epoch = initial_epoch
-        self.logs = {'g_loss': [], 'd_loss': []}
-    
-
-    def _plot_loss(self, logs={}):
-        # Plot g_loss and d_loss
-        fig, ax = plt.subplots()
-        epochs = [epoch+self.initial_epoch for epoch in range(len(logs['d_loss']))]
-        ax.plot(epochs, logs['d_loss'], c='blue', label='d_loss')
-        ax.plot(epochs, logs['g_loss'], c='red', label='g_loss')
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Loss')
-        ax.legend()
-        fig.savefig(os.path.join(self.images_dir, 'losses.png'))
-
-
-    def _generate_and_save(self, epoch):
-        epoch += self.initial_epoch
-        # Save the generator and the discriminator
-        self.model.generator.save(os.path.join(self.models_dir, f'generator_{epoch}'))
-        self.model.discriminator.save(os.path.join(self.models_dir, f'discriminator_{epoch}'))
-        # Plot a grid of generated images
-        images = self.model.generator(self.labels).numpy()
-        plot_grid(images, self.nrows, self.ncols, os.path.join(self.images_dir, f'generated_images_{epoch}'))
-
-
-    # def on_train_begin(self, logs=None):
-    #     # Print generator summary and plot the model
-    #     self.model.generator.summary()
-    #     gen_plot_file = os.path.join(self.images_dir, 'generator.png')
-    #     tf.keras.utils.plot_model(self.model.generator, show_shapes=True, to_file=gen_plot_file)
-    #     # Print discriminator summary and plot the model
-    #     self.model.discriminator.summary()
-    #     disc_plot_file = os.path.join(self.images_dir, 'discriminator.png')
-    #     tf.keras.utils.plot_model(self.model.discriminator, show_shapes=True, to_file=disc_plot_file)
-
-
-    # def on_batch_end(self, batch, logs=None):
-    #     for key in ('g_loss', 'd_loss'):
-    #         self.logs[key].append(logs[key])
-
-
-    def on_epoch_end(self, epoch, logs=None):
-        for key in ('g_loss', 'd_loss'):
-            self.logs[key].append(logs[key])
         
-        self._plot_loss(self.logs)
-
-        if epoch%self.epochs == 0:
-            self._generate_and_save(epoch)
-
-
-    def on_train_end(self, logs=None):
-        # TODO: avoid repetition if the total_epochs%epochs == 0
-        for key in ('g_loss', 'd_loss'):
-            self.logs[key].append(logs[key])
-
-        self._plot_loss(self.logs)
-        epoch = '' # TODO: self.params.epochs?
-        self._generate_and_save(epoch)
-        # Plot a grid of real images corresponding to the same labels
-        plot_grid(self.images, self.nrows, self.ncols, save_path=os.path.join(self.images_dir, 'real_images.png'))
-

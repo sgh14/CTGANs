@@ -1,15 +1,16 @@
 #%%
+import yaml
 from tensorflow.keras import models
 
-from data_loader import *
-from predictor import *
+from data_loader import load_data
+from predictor import get_predictor
 from discriminator import Discriminator, get_discriminator_loss, get_discriminator_optimizer
 from generator import Generator, get_generator_loss, get_generator_optimizer
-from GANs import *
-from data_generator import *
+from GANs import GANs
+from callback import Checkpoint
 
 
-config_path = 'config_files/GANs.yml'
+config_path = input('Configuration file path: ') #'config_files/GANs.yml'
 with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -38,8 +39,8 @@ gans = GANs(
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
-    discriminator_extra_steps=gans_config['discriminator_extra_steps'], # TODO: should be 0 for no extra steps
-    generator_extra_steps=gans_config['generator_extra_steps'],
+    discriminator_steps=gans_config['discriminator_steps'],
+    generator_steps=gans_config['generator_steps'],
     gp_weight=gans_config['gp_weight']
 )
 
@@ -60,6 +61,6 @@ gans.compile(
 )
 
 #%% TRAIN GANS
-plot_and_save = Plot_and_save(dataset, **config['Callback'])
-history = gans.fit(dataset, epochs=gans_config['epochs'], verbose=1, callbacks=[plot_and_save])
+checkpoint = Checkpoint(dataset, **config['Callback'])
+history = gans.fit(dataset, epochs=gans_config['epochs'], verbose=1, callbacks=[checkpoint])
 
