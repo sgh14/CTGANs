@@ -38,7 +38,9 @@ class Checkpoint(callbacks.Callback):
         self.ncols = ncols
         self.images_dir = images_dir
         self.models_dir = models_dir
+        self.initial_epoch = initial_epoch
         self.loss_file_path = os.path.join(self.models_dir, 'losses.json')
+        
         if initial_epoch != 0 and os.path.exists(self.loss_file_path):
             with open(self.loss_file_path, 'r') as loss_file:
                 self.logs = json.load(loss_file)

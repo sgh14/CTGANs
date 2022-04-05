@@ -124,7 +124,7 @@ GANs:
     discriminator_steps: 5
     generator_steps: 1
     gp_weight: 10
-    epochs: 300
+    epochs: 200
 Callback:
     # Possible keys:
     # - epochs: 1 # Number of epochs between every checkpoint
