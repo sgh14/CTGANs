@@ -46,6 +46,9 @@ class Checkpoint(callbacks.Callback):
                 self.logs = json.load(loss_file)
         else:
             self.logs = {'g_loss': [], 'd_loss': []}
+
+        # Plot a grid of real images corresponding to the same labels
+        plot_grid(self.images, self.nrows, self.ncols, save_path=os.path.join(self.images_dir, 'real_images.png'))
     
 
     def _plot_loss(self, logs={}):
@@ -98,14 +101,9 @@ class Checkpoint(callbacks.Callback):
         
         self._plot_loss(self.logs)
 
-        if epoch%self.epochs == 0:
-            self._generate_and_save(epoch)
-
-
-    def on_train_end(self, logs=None):
         with open(os.path.join(self.models_dir, 'losses.json'), 'w') as file:
             json.dump(self.logs, file)
 
-        # Plot a grid of real images corresponding to the same labels
-        plot_grid(self.images, self.nrows, self.ncols, save_path=os.path.join(self.images_dir, 'real_images.png'))
+        if epoch%self.epochs == 0:
+            self._generate_and_save(epoch)
 
