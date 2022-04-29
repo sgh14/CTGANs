@@ -1,37 +1,3 @@
-## Welcome to GitHub Pages
+## Abstract
 
-You can use the [editor on GitHub](https://github.com/sgh14/CTGANs/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
-
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/sgh14/CTGANs/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Deep learning is an area of machine learning that has undergone enormous development in recent years and whose applications are revolutionizing a wide range of fields, including science. This revolution has also reached the field of physics and, among other branches of physics, high energy physics. So far, the so-called deep learning predictive models have shown great efficiency in massive data analysis. An example of this is the CTLearn project, a library programmed in Python focused on the analysis of images from Imaging Atmospheric Cherenkov Atmospheric Telescopes (IACTs). However, the training of these models requires a large volume of labeled data, something that for the case of CTLearn is obtained by expensive simulations. In order to reduce the computational cost and increase the realism of the training data, this project studies the possibility of replacing such simulations with what is called a deep learning generative model. Specifically, the potential of so-called generative adversarial networks or GANs for this purpose is assessed. Employing an AC-GANs type approach, the aim is to replicate a simulated data set from its labels (particle type, energy and direction of arrival). The level of realism of the images and their degree of correlation with their labels is evaluated using predictive models on a validation dataset. As a result, \colorbox{red}{generation times several orders of magnitude shorter} and a promising degree of realism are obtained, but an insufficient correlation with the labels, something that could be solved with a better adjustment of the model configuration.
