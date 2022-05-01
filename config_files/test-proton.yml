@@ -1,7 +1,7 @@
 Data_format: 'dl1dh'
 Reco: ['particletype', 'energy', 'direction'] # 'particletype', 
 Data:
-    file_list: 'data_files/gamma-test.txt'
+    file_list: 'data_files/proton-test.txt'
     mode: 'mono' # 'stereo'
     selected_telescope_types: ['LST_MAGIC_MAGICCam']
     shuffle: true
@@ -23,10 +23,10 @@ Input:
     shuffle: false
     batch_size: 1024
 
-models_dir: 'models/gamma'
+models_dir: 'models/proton'
 particle_type_classifier: 'models/predictor-particletype'
-energy_regressor: 'models/predictor-energy-gamma'
-direction_regressor: 'models/predictor-direction-gamma'
-total_epochs: 200
-epochs_between_models: 1
-results_dir: 'test/gamma'
+energy_regressor: 'models/predictor-energy-proton'
+direction_regressor: 'models/predictor-direction-proton'
+total_epochs: 2000
+epochs_between_models: 10
+results_dir: 'test/proton'
