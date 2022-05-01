@@ -104,6 +104,6 @@ class Checkpoint(callbacks.Callback):
         with open(os.path.join(self.models_dir, 'losses.json'), 'w') as file:
             json.dump(self.logs, file)
 
-        if epoch%self.epochs == 0:
+        if (epoch+self.initial_epoch+1)%self.epochs == 0:
             self._generate_and_save(epoch)
 
