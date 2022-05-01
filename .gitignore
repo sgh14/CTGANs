@@ -1,6 +1,14 @@
 /models/
 /__pycache__/
 /misc/
-images/losses.png
-images/generated_images_*.png
+/test/
+/data/
+images/gamma/losses.png
+images/gamma/generated_images_*.png
+images/proton/losses.png
+images/proton/generated_images_*.png
 data_files/gamma-diffuse-lite.txt
+config_files/train-test-predictors.sh
+plot_samples.py
+images/gamma/losses.pdf
+images/proton/losses.pdf

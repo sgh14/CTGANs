@@ -5,7 +5,7 @@ from tensorflow import keras
 class GANs(keras.Model):
     def __init__(
         self,
-        dataset,
+        dataset, # TODO: model instantiation shouldn't need the dataset
         discriminator,
         generator,
         predictor,
@@ -14,10 +14,11 @@ class GANs(keras.Model):
         gp_weight=10
     ):
         super(GANs, self).__init__()
-
+        # Find the image and label shapes (TODO: this should be unnecessary)
         features, labels = dataset.__getitem__(0)
         self.img_shape = (dataset.batch_size, *dataset.img_shape)
         self.labels_shape = {task: labels[task].shape for task in labels.keys()}
+
         self.discriminator = discriminator
         self.generator = generator
         self.predictor = predictor
@@ -35,23 +36,19 @@ class GANs(keras.Model):
 
     
     def _gradient_penalty(self, batch_size, real_images, generated_images):
-        """ Calculates the gradient penalty.
-        This loss is calculated on an interpolated image
-        and added to the discriminator loss.
-        """
-        # Get the interpolated image
+        # Get the interpolated images
         alpha = tf.random.normal([batch_size, 1, 1, 1], 0.0, 1.0)
         diff = generated_images - real_images
         interpolated = real_images + alpha * diff
 
         with tf.GradientTape() as gp_tape:
             gp_tape.watch(interpolated)
-            # 1. Get the discriminator output for this interpolated image.
+            # Get the discriminator output for the interpolated images
             pred = self.discriminator(interpolated, training=True)
 
-        # 2. Calculate the gradients w.r.t to this interpolated image.
+        # Calculate the gradients with respect to the interpolated images
         grads = gp_tape.gradient(pred, [interpolated])[0]
-        # 3. Calculate the norm of the gradients.
+        # Calculate the norm of the gradients.
         norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3]))
         gp = tf.reduce_mean((norm - 1.0) ** 2)
         
@@ -69,7 +66,7 @@ class GANs(keras.Model):
             # disc_labels now are ones (real), since the generator expects to fool the discriminator
             g_loss = self.g_loss_fn(d_outputs, p_outputs, tf.ones((batch_size, 1)), labels)
         
-        # Get the gradients w.r.t the generator loss
+        # Get the gradients with respect to the generator loss
         g_gradient = tape.gradient(g_loss, self.generator.trainable_variables)
 
         return g_loss, g_gradient
@@ -78,6 +75,7 @@ class GANs(keras.Model):
     def _generator_train_step(self, real_images, labels):
         batch_size = tf.shape(real_images)[0]
         for _ in range(self.g_steps):
+            # Compute the loss and the gradients for the generator
             g_loss, g_gradient = self._get_g_loss_and_grads(batch_size, labels)
             # Update the weights of the generator using the generator optimizer
             self.g_optimizer.apply_gradients(
@@ -95,13 +93,14 @@ class GANs(keras.Model):
             # Calculate the discriminator loss using the fake and real image logits
             d_loss = self.d_loss_fn(tf.ones((batch_size, 1)), d_outputs_on_real)\
                    + self.d_loss_fn(tf.zeros((batch_size, 1)), d_outputs_on_generated)
+            # Apply gradient penalty if the weight for its contribution is not nule
             if self.gp_weight:
                 # Calculate the gradient penalty
                 gp = self._gradient_penalty(batch_size, real_images, generated_images)
                 # Add the gradient penalty to the original discriminator loss
                 d_loss += gp * self.gp_weight                
 
-        # Get the gradients w.r.t the discriminator loss
+        # Get the gradients with respect to the discriminator loss
         d_gradient = tape.gradient(d_loss, self.discriminator.trainable_variables)
 
         return d_loss, d_gradient
@@ -123,15 +122,11 @@ class GANs(keras.Model):
 
 
     def train_step(self, data):
-        # Unpack the data.
+        # Unpack the data
         features, labels = data
-        # TODO: this should be unnecessary
-        real_images = tf.reshape(features['images'], self.img_shape) #*2/self.max_intensity - 1
+        # TODO: this should be unnecessary, but the value for all dimensions of images and labels is None
+        real_images = tf.reshape(features['images'], self.img_shape)
         for task in labels.keys():
-            # TODO: remove 2 and task=='energy' to generalize.
-            # label_shape = 2 if task != 'energy' else 1
-            # label_shape = tf.cond(tf.rank(labels[task])==2, lambda: tf.shape(labels[task])[-1], lambda: 1)
-            # label_shape = tf.shape(labels[task])[1] if tf.rank(labels[task]) == tf.constant(2) else 1
             labels[task] = tf.reshape(labels[task], self.labels_shape[task])
 
         # Discriminator train step

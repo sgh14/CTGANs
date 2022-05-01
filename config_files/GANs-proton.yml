@@ -124,7 +124,7 @@ GANs:
     discriminator_steps: 5
     generator_steps: 1
     gp_weight: 10
-    epochs: 200
+    epochs: 2000
 Callback:
     # Possible keys:
     # - epochs: 1 # Number of epochs between every checkpoint
@@ -133,7 +133,7 @@ Callback:
     # - images_dir: 'images' # Directory to save the generated images and loss plot
     # - models_dir: 'models' # Directory to save the models
     # - initial_epoch: 0 # Intial epoch, used only when resuming training
-    epochs: 1
+    epochs: 10
     nrows: 5
     ncols: 5
     images_dir: images/proton

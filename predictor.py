@@ -16,8 +16,10 @@ def train_predictor(config_path):
 
 
 def get_predictor(predefined_model_path, config_path):
+    # Load the predictor if a predefined model is specified and it exists
     if predefined_model_path and os.path.exists(predefined_model_path):
         predictor = models.load_model(predefined_model_path)
+    # Otherwise, train a new predictor
     else:
         predictor_path = train_predictor(config_path)
         predictor = models.load_model(predictor_path)
