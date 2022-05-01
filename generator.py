@@ -135,7 +135,7 @@ class Generator(keras.Model):
         random_latent_vectors = tf.random.normal(shape=(batch_size, self.latent_dim))
         g_inputs = random_latent_vectors
         for task in labels.values():
-            g_inputs = tf.concat([g_inputs, task], axis=1)
+            g_inputs = tf.concat([g_inputs, task], axis=1) # TODO: axis=-1?
 
         return g_inputs
     
@@ -154,15 +154,15 @@ class Generator(keras.Model):
         return x
 
 
-# TODO: implement a custom class that inherits from losses.Loss
-# See if this allows to implement gradient penalty inside the loss class
 def get_generator_loss(name='bce', weights=np.array([1, 1, 1, 1]), label_smoothing=0.1):
+    # Define the Wasserstein loss function
     def wasserstein_loss(labels, d_outputs):
         alphas = -(labels/(1-label_smoothing)*2-1) # map labels to fake=1 and real=-1
         loss = tf.reduce_mean(alphas*d_outputs) # fake_loss - real_loss
         
         return loss
 
+    # Define the main loss functions (the contribution that asses the degree of realism)
     main_loss_functions = {
         # from_logits=True to avoid using sigmoid activation when defining the discriminator
         'bce': losses.BinaryCrossentropy(from_logits=True),
@@ -174,9 +174,13 @@ def get_generator_loss(name='bce', weights=np.array([1, 1, 1, 1]), label_smoothi
     c_loss = losses.CategoricalCrossentropy() # classification loss function
     r_loss = losses.MeanSquaredError() # regression loss function
 
+    # Define the generator loss function
     def generator_loss(d_outputs, p_outputs, d_labels, p_labels):
+        # Apply label smoothing
         smoothed_d_labels = d_labels*(1-label_smoothing)
+        # Compute main loss
         loss = weights[0]*main_loss(smoothed_d_labels, d_outputs)
+        # Add the contributions from the predictor depending on which labels are used for conditioning
         if 'particletype' in p_labels.keys():
             loss += weights[1]*c_loss(p_labels['particletype'], p_outputs['particletype'])
 

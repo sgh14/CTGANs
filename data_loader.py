@@ -1,4 +1,3 @@
-import yaml
 from dl1_data_handler.reader import DL1DataReaderSTAGE1, DL1DataReaderDL1DH
 from ctlearn.data_loader import KerasBatchGenerator
 from ctlearn.utils import *

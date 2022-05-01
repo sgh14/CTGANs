@@ -96,6 +96,7 @@ def get_discriminator_loss(name='bce', label_smoothing=0.1):
 
     loss_function = loss_functions[name]
     def discriminator_loss(labels, d_outputs):
+        # Apply label smoothing
         smoothed_labels = labels*(1-label_smoothing)
         loss = loss_function(smoothed_labels, d_outputs)
 
