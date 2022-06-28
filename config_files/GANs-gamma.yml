@@ -1,27 +1,55 @@
-Data_format: 'dl1dh'
-Reco: ['energy', 'direction'] # 'particletype', 
-Data:
-    file_list: 'data_files/gamma-train.txt'
-    mode: 'mono' # 'stereo'
-    selected_telescope_types: ['LST_MAGIC_MAGICCam']
-    shuffle: true
-    seed: 1234
-    image_channels: ['image'] # , 'peak_time']
-    mapping_settings:
-        camera_types: ['MAGICCam']
-        mapping_method:
-            'MAGICCam': 'image_shifting'
-        padding:
-            'MAGICCam': 2
-        # interpolation_image_shape:
-        #     'LSTCam': [60, 60, 1]
-        mask_interpolation: false
-    parameter_selection: 
-        - {col_name: "hillas_intensity", min_value: 200.0} # 200.0}
-        - {col_name: "leakage_intensity_width_2", max_value: 0.1} # 0.0}
-Input:
-    shuffle: true
-    batch_size: 512
+################################### DATA ###################################
+Training_dataset:
+    Data_format: 'dl1dh'
+    Reco: ['energy', 'direction'] # 'particletype', 
+    Data:
+        file_list: 'data_files/gamma-train.txt'
+        mode: 'mono' # 'stereo'
+        selected_telescope_types: ['LST_MAGIC_MAGICCam']
+        shuffle: true
+        seed: 1234
+        image_channels: ['image'] # , 'peak_time']
+        mapping_settings:
+            camera_types: ['MAGICCam']
+            mapping_method:
+                'MAGICCam': 'image_shifting'
+            padding:
+                'MAGICCam': 2
+            # interpolation_image_shape:
+            #     'LSTCam': [60, 60, 1]
+            mask_interpolation: false
+        parameter_selection: 
+            - {col_name: "hillas_intensity", min_value: 200.0} # 200.0}
+            - {col_name: "leakage_intensity_width_2", max_value: 0.1} # 0.0}
+    Input:
+        shuffle: true
+        batch_size: 512
+Validation_dataset:
+    Data_format: 'dl1dh'
+    Reco: ['particletype', 'energy', 'direction']
+    Data:
+        file_list: 'data_files/gamma-validate.txt'
+        mode: 'mono' # 'stereo'
+        selected_telescope_types: ['LST_MAGIC_MAGICCam']
+        shuffle: true
+        seed: 1234
+        image_channels: ['image'] # , 'peak_time']
+        mapping_settings:
+            camera_types: ['MAGICCam']
+            mapping_method:
+                'MAGICCam': 'image_shifting'
+            padding:
+                'MAGICCam': 2
+            # interpolation_image_shape:
+            #     'LSTCam': [60, 60, 1]
+            mask_interpolation: false
+        parameter_selection: 
+            - {col_name: "hillas_intensity", min_value: 200.0} # 200.0}
+            - {col_name: "leakage_intensity_width_2", max_value: 0.1} # 0.0}
+    Input:
+        shuffle: true
+        batch_size: 512
+################################### MODELS ###################################
 Predictor:
     # Possible keys:
     # - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
@@ -124,18 +152,36 @@ GANs:
     discriminator_steps: 5
     generator_steps: 1
     gp_weight: 10
-    epochs: 200
+    epochs: 100
 Callback:
     # Possible keys:
+    # - particle_type_classifier_config:
+    #   - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    #   - config_path: [string: path to the config.yml file used by CTLearn in case there isn't any predefined model]
+    # - energy_regressor_config:
+    #   - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    #   - config_path: [string: path to the config.yml file used by CTLearn in case there isn't any predefined model]
+    # - direction_regressor_config:
+    #   - predefined_model_path: [string: path to a predefined model --> set to false if there isn't any]
+    #   - config_path: [string: path to the config.yml file used by CTLearn in case there isn't any predefined model]
     # - epochs: 1 # Number of epochs between every checkpoint
     # - nrows: 5 # Number of rows in the grid of generated images
     # - ncols: 5 # Number of columns in the grid of generated images
     # - images_dir: 'images' # Directory to save the generated images and loss plot
     # - models_dir: 'models' # Directory to save the models
     # - initial_epoch: 0 # Intial epoch, used only when resuming training
-    epochs: 1
+    particle_type_classifier_config:
+        predefined_model_path: 'models/predictor-particletype'
+        config_path: 'config_files/predictor-particletype.yml'
+    energy_regressor_config:
+        predefined_model_path: 'models/predictor-energy-gamma'
+        config_path: 'config_files/predictor-energy-gamma.yml'
+    direction_regressor_config:
+        predefined_model_path: 'models/predictor-direction-gamma'
+        config_path: 'config_files/predictor-direction-gamma.yml'
+    epochs: 4
     nrows: 5
-    ncols: 5
-    images_dir: images/gamma
-    models_dir: models/gamma
+    ncols: 10
+    images_dir: checkpoints/gamma_1/images
+    models_dir: checkpoints/gamma_1/models
     initial_epoch: 0

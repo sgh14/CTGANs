@@ -29,6 +29,7 @@ Additionally, the following installation is necessary:
 
 1. `pip install tensorflow-addons`
 2. `pip install --upgrade matplotlib`
+3. `pip install wandb` (afterwards run `wandb login` and log in)
 
 ## Usage
 
