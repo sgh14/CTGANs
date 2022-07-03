@@ -59,7 +59,7 @@ np.savetxt(os.path.join(predictions_dir, 'energy_predictions_on_real.txt'), ener
 np.savetxt(os.path.join(predictions_dir, 'direction_predictions_on_real.txt'), direction_predictions_on_real)
 # Remove batch dimension from label lists
 for key in labels.keys():
-        labels[key] = np.concatenate(labels[key], axis=0).tolist()
+    labels[key] = np.concatenate(labels[key], axis=0).tolist()
 
 # Save the labels as a json file
 with open(os.path.join(config['results_dir'], 'labels.json'), 'w') as file:
@@ -70,7 +70,7 @@ with open(os.path.join(config['results_dir'], 'labels.json'), 'w') as file:
 
 # Turn label lists into numpy arrays
 for key in labels.keys():
-        labels[key] = np.array(labels[key])
+    labels[key] = np.array(labels[key])
 
 # Compute the metrics for real data
 particle_type_acc_on_real = metrics.accuracy_score(np.argmax(labels['particletype'], axis=1), np.argmax(particle_type_predictions_on_real, axis=1))

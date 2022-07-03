@@ -1,3 +1,5 @@
+import os
+import wandb
 import yaml
 from tensorflow.keras import models
 
@@ -8,9 +10,10 @@ from generator import Generator, get_generator_loss, get_generator_optimizer
 from GANs import GANs
 from callback import Checkpoint
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Load the config file
-config_path = input('Configuration file path: ') #'config_files/GANs.yml'
+config_path = 'config_files/GANs-gamma.yml' # input('Configuration file path: ') 
 with open(config_path, 'r') as config_file:
         config = yaml.safe_load(config_file)
 
@@ -19,8 +22,19 @@ g_config = config['Generator']
 d_config = config['Discriminator']
 gans_config = config['GANs']
 
+wandb.init(
+    project="CTGANs-gamma",
+    config = {
+        'Input': config['Training_dataset']['Input'],
+        'Generator': g_config,
+        'Discriminator': d_config,
+        'GANs': gans_config
+    }
+)
+
 # Load the data
-dataset = load_data(config, **config['Input'])
+training_dataset = load_data(config['Training_dataset'], **config['Training_dataset']['Input'])
+validation_dataset = load_data(config['Validation_dataset'], **config['Validation_dataset']['Input'])
 
 # Train the predcitor (CTLearn auxiliary model) there isn't any already trained
 predictor = get_predictor(**config['Predictor'])
@@ -35,7 +49,7 @@ discriminator = models.load_model(d_path) if d_path else Discriminator(d_config)
 
 # Instantiate the GANs model.
 gans = GANs(
-    dataset=dataset,
+    dataset=training_dataset,
     discriminator=discriminator,
     generator=generator,
     predictor=predictor,
@@ -61,5 +75,5 @@ gans.compile(
 )
 
 # Instantiate the callback and train the GANs
-checkpoint = Checkpoint(dataset, **config['Callback'])
-history = gans.fit(dataset, epochs=gans_config['epochs'], verbose=1, callbacks=[checkpoint])
+checkpoint = Checkpoint(config_path, validation_dataset, **config['Callback'])
+history = gans.fit(training_dataset, epochs=gans_config['epochs'], verbose=1, callbacks=[checkpoint])

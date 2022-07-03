@@ -3,12 +3,8 @@
 /misc/
 /test/
 /data/
-images/gamma/losses.png
-images/gamma/generated_images_*.png
-images/proton/losses.png
-images/proton/generated_images_*.png
+/wandb/
+/checkpoints/
 data_files/gamma-diffuse-lite.txt
 config_files/train-test-predictors.sh
 plot_samples.py
-images/gamma/losses.pdf
-images/proton/losses.pdf
