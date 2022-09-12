@@ -3,7 +3,9 @@ Last update: 02/05/2022
 ## Presentation in YouTube
 
 <p align="center">
-[![Presentation](https://img.youtube.com/vi/oe7Ohi2en6M/0.jpg)](https://www.youtube.com/watch?v=oe7Ohi2en6M)
+  <a href="https://www.youtube.com/watch?v=oe7Ohi2en6M">
+         <img alt="Presentation" src="https://img.youtube.com/vi/oe7Ohi2en6M/0.jpg">
+  </a>
 </p>
 
 ## Abstract
